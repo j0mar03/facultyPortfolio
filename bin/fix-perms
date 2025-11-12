@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure containers are up
+docker compose ps >/dev/null
+
+# Fix Laravel writable dirs - run as root user
+docker compose exec -T -u root app bash -lc "mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache"
+docker compose exec -T -u root app bash -lc "chown -R 1000:1000 .env storage bootstrap/cache database"
+docker compose exec -T -u root app bash -lc "chmod -R 775 storage bootstrap/cache database"
+docker compose exec -T -u root app bash -lc "chmod 664 .env"
+
+echo 'Permissions fixed for .env, storage, bootstrap/cache, and database.'
+
+

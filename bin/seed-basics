@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure app exists
+if [ ! -f "composer.json" ]; then
+  echo "Laravel app not found. Run bin/bootstrap first."
+  exit 1
+fi
+
+# Add DemoSubjectSeeder and UserSeeder
+docker compose exec -T app bash -lc "php artisan make:seeder DemoSubjectSeeder || true"
+docker compose exec -T app bash -lc "php artisan make:seeder UserSeeder || true"
+
+docker compose exec -T app bash -lc "cat > database/seeders/DemoSubjectSeeder.php <<'PHP'\n<?php\nnamespace Database\\Seeders;\nuse Illuminate\\Database\\Seeder;\nuse Illuminate\\Support\\Facades\\DB;\nclass DemoSubjectSeeder extends Seeder { public function run(): void {\n\t// Create a few demo subjects for each course and term\n\t$courses = DB::table('courses')->pluck('id','code');\n\tif ($courses->isEmpty()) return;\n\t$subjects = [\n\t\t['course' => 'DICT','code' => 'DICT101','title' => 'Intro to ICT','year_level'=>1,'term'=>1],\n\t\t['course' => 'DICT','code' => 'DICT102','title' => 'Programming 1','year_level'=>1,'term'=>2],\n\t\t['course' => 'DCET','code' => 'DCET201','title' => 'Circuits','year_level'=>2,'term'=>1],\n\t];\n\tforeach ($subjects as $s) {\n\t\tif (!isset($courses[$s['course']])) continue;\n\t\tDB::table('subjects')->updateOrInsert([\n\t\t\t'course_id' => $courses[$s['course']], 'code' => $s['code'], 'year_level'=>$s['year_level'],'term'=>$s['term']\n\t\t],[ 'title' => $s['title'] ]);\n\t}\n}}\nPHP"
+
+docker compose exec -T app bash -lc "cat > database/seeders/UserSeeder.php <<'PHP'\n<?php\nnamespace Database\\Seeders;\nuse Illuminate\\Database\\Seeder;\nuse Illuminate\\Support\\Facades\\Hash;\nuse Illuminate\\Support\\Facades\\DB;\nclass UserSeeder extends Seeder { public function run(): void {\n\t$users = [\n\t\t['name'=>'Admin','email'=>'admin@example.com','password'=>Hash::make('password'),'role'=>'admin'],\n\t\t['name'=>'Chair DICT','email'=>'chair.dict@example.com','password'=>Hash::make('password'),'role'=>'chair'],\n\t\t['name'=>'Faculty One','email'=>'faculty1@example.com','password'=>Hash::make('password'),'role'=>'faculty'],\n\t\t['name'=>'Auditor','email'=>'auditor@example.com','password'=>Hash::make('password'),'role'=>'auditor'],\n\t];\n\tforeach ($users as $u) {\n\t\t$id = DB::table('users')->updateOrInsert(['email'=>$u['email']], ['name'=>$u['name'],'password'=>$u['password']]);\n\t}\n}}\nPHP"
+
+# Add DatabaseSeeder wiring
+docker compose exec -T app bash -lc "php -r '\n\$p=\"database/seeders/DatabaseSeeder.php\"; \$c=file_get_contents(\$p);\nif (strpos(\$c, \"CourseSeeder::class\")===false) {\n\t\$c=str_replace(\"public function run(): void\\n    {\",\"public function run(): void\\n    {\\n        \$this->call([\\n            CourseSeeder::class,\\n            DemoSubjectSeeder::class,\\n            UserSeeder::class,\\n        ]);\", \$c);\n\tfile_put_contents(\$p,\$c);\n}\n'"
+
+# Seed now
+docker compose exec -T app bash -lc "php artisan db:seed"
+
+echo 'Basic seeders executed: courses, demo subjects, users.'
+
+

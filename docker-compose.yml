@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: facultyportfolio-app
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - composer-cache:/tmp/composer-cache
+    environment:
+      - TZ=UTC
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: facultyportfolio-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+    volumes:
+      - ./:/var/www/html
+
+  db:
+    image: mysql:8.0
+    container_name: facultyportfolio-db
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_DATABASE=faculty_portfolio
+      - MYSQL_USER=faculty
+      - MYSQL_PASSWORD=faculty
+      - MYSQL_ROOT_PASSWORD=root
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:
+  composer-cache:
+
+

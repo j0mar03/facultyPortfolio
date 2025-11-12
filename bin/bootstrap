@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Start containers
+docker compose up -d --build
+
+# Create Laravel project if not present (install into temp then sync to avoid non-empty dir issues)
+if [ ! -f "composer.json" ]; then
+  docker compose exec -T app bash -lc "rm -rf /tmp/laravel && composer create-project laravel/laravel /tmp/laravel --no-interaction"
+  # Sync skeleton into current workspace without overwriting docker/bin files
+  docker compose exec -T app bash -lc "rsync -a /tmp/laravel/ . --exclude vendor --exclude node_modules"
+fi
+
+# Generate app key and link storage
+docker compose exec -T app bash -lc "php artisan key:generate || true"
+docker compose exec -T app bash -lc "php artisan storage:link || true"
+
+# Install Jetstream Livewire (teams off) - v5 for Laravel 12
+docker compose exec -T app bash -lc "composer require laravel/jetstream:^5 --no-interaction"
+docker compose exec -T app bash -lc "php artisan jetstream:install livewire --dark"
+
+# NPM install/build (optional for now)
+docker compose exec -T app bash -lc "npm install && npm run build || true"
+
+# Prepare .env for DB connection to docker MySQL
+docker compose exec -T -u root app bash -lc "sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env"
+docker compose exec -T -u root app bash -lc "sed -i 's/^# DB_HOST=.*/DB_HOST=db/' .env"
+docker compose exec -T -u root app bash -lc "sed -i 's/^# DB_PORT=.*/DB_PORT=3306/' .env"
+docker compose exec -T -u root app bash -lc "sed -i 's/^# DB_DATABASE=.*/DB_DATABASE=faculty_portfolio/' .env"
+docker compose exec -T -u root app bash -lc "sed -i 's/^# DB_USERNAME=.*/DB_USERNAME=faculty/' .env"
+docker compose exec -T -u root app bash -lc "sed -i 's/^# DB_PASSWORD=.*/DB_PASSWORD=faculty/' .env"
+
+# Fix permissions for .env, storage, cache, and database directories
+docker compose exec -T -u root app bash -lc "chown -R 1000:1000 .env storage bootstrap/cache database"
+docker compose exec -T -u root app bash -lc "chmod -R 775 storage bootstrap/cache database"
+docker compose exec -T -u root app bash -lc "chmod 664 .env"
+
+# Remove duplicate migration if it exists
+docker compose exec -T -u root app bash -lc "rm -f database/migrations/2025_11_11_124313_add_two_factor_columns_to_users_table.php"
+
+# Migrate base tables
+docker compose exec -T app bash -lc "php artisan migrate:fresh --force"
+
+echo 'Bootstrap complete. App should be accessible at http://localhost:8080'
+
+

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Spatie permission package
+docker compose exec -T app bash -lc "composer require spatie/laravel-permission:^6 --no-interaction"
+docker compose exec -T app bash -lc "php artisan vendor:publish --provider=\"Spatie\\Permission\\PermissionServiceProvider\" --tag=\"migrations\""
+docker compose exec -T app bash -lc "php artisan vendor:publish --provider=\"Spatie\\Permission\\PermissionServiceProvider\" --tag=\"config\""
+docker compose exec -T app bash -lc "php artisan migrate --force"
+
+echo 'Permissions package installed and migrated.'
+
+
