@@ -1,20 +1,175 @@
 <x-app-layout>
 	<x-slot name="header">
-		<h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-			{{ __('Portfolio') }} — {{ $portfolio->classOffering->subject->code }} ({{ $portfolio->classOffering->academic_year }} / T{{ $portfolio->classOffering->term }}, Sec {{ $portfolio->classOffering->section }})
-		</h2>
+		<div class="flex justify-between items-center">
+			<h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+				{{ __('Portfolio') }} — {{ $portfolio->classOffering->subject->code }} ({{ $portfolio->classOffering->academic_year }} / T{{ $portfolio->classOffering->term }}, Sec {{ $portfolio->classOffering->section }})
+			</h2>
+			<a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Dashboard</a>
+		</div>
 	</x-slot>
+
 	<div class="py-12">
-		<div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+		<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+			{{-- Status and Submit Section --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
-				<div class="mb-4">
-					<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-						{{ $portfolio->status === 'approved' ? 'bg-green-100 text-green-800' : ($portfolio->status === 'submitted' ? 'bg-blue-100 text-blue-800' : ($portfolio->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) }}">
-						Status: {{ ucfirst($portfolio->status) }}
-					</span>
+				<div class="flex justify-between items-center">
+					<div>
+						<span class="inline-flex items-center px-3 py-1 rounded text-sm font-medium
+							{{ $portfolio->status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+							   ($portfolio->status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
+							   ($portfolio->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' :
+							   'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200')) }}">
+							Status: {{ ucfirst($portfolio->status) }}
+						</span>
+						@if($portfolio->submitted_at)
+							<p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+								Submitted: {{ $portfolio->submitted_at->format('M d, Y h:i A') }}
+							</p>
+						@endif
+					</div>
+					@if($portfolio->status === 'draft')
+						<form method="POST" action="{{ route('portfolios.submit', $portfolio) }}" onsubmit="return confirm('Are you sure you want to submit this portfolio? You cannot edit it after submission.');">
+							@csrf
+							<x-button type="submit" class="bg-green-600 hover:bg-green-700">
+								Submit for Review
+							</x-button>
+						</form>
+					@endif
 				</div>
-				<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Checklist and uploads will appear here in the next step.</p>
-				<a href="{{ route('portfolios.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Back to list</a>
+
+				@if($errors->has('submit'))
+					<div class="mt-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 px-4 py-3 rounded">
+						{{ $errors->first('submit') }}
+					</div>
+				@endif
+
+				@if(session('status'))
+					<div class="mt-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-200 px-4 py-3 rounded">
+						{{ session('status') }}
+					</div>
+				@endif
+
+				{{-- Review Feedback --}}
+				@php
+					$latestReview = $portfolio->reviews()->latest()->first();
+				@endphp
+				@if($latestReview)
+					<div class="mt-4 border-l-4 {{ $latestReview->decision === 'approved' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20' }} p-4">
+						<div class="flex items-center mb-2">
+							<span class="font-semibold text-gray-900 dark:text-gray-100">
+								{{ $latestReview->decision === 'approved' ? 'Approved' : 'Rejected' }}
+							</span>
+							<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">
+								by {{ $latestReview->reviewer->name }} · {{ $latestReview->created_at->diffForHumans() }}
+							</span>
+						</div>
+						@if($latestReview->remarks)
+							<p class="text-sm text-gray-700 dark:text-gray-300"><strong>Remarks:</strong> {{ $latestReview->remarks }}</p>
+						@endif
+					</div>
+				@endif
+			</div>
+
+			{{-- Portfolio Items Checklist --}}
+			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Required Documents</h3>
+				<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Upload all required documents to submit your portfolio.</p>
+
+				<div class="space-y-4">
+					@php
+						$itemTypes = config('portfolio.item_types');
+						$requiredTypes = config('portfolio.required_items');
+						$uploadedItems = $portfolio->items->groupBy('type');
+					@endphp
+
+					@foreach($itemTypes as $type => $label)
+						@php
+							$isRequired = in_array($type, $requiredTypes);
+							$items = $uploadedItems->get($type, collect());
+							$hasUpload = $items->isNotEmpty();
+						@endphp
+
+						<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+							<div class="flex items-start justify-between">
+								<div class="flex-1">
+									<div class="flex items-center gap-2">
+										@if($hasUpload)
+											<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+											</svg>
+										@else
+											<svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"/>
+											</svg>
+										@endif
+										<h4 class="text-md font-medium text-gray-900 dark:text-gray-100">
+											{{ $label }}
+											@if($isRequired)
+												<span class="text-red-500">*</span>
+											@endif
+										</h4>
+									</div>
+
+									{{-- Display uploaded files --}}
+									@if($hasUpload)
+										<div class="mt-3 space-y-2">
+											@foreach($items as $item)
+												<div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded px-3 py-2">
+													<div class="flex items-center gap-2">
+														<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+															<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+														</svg>
+														<span class="text-sm text-gray-700 dark:text-gray-300">{{ $item->title }}</span>
+														<span class="text-xs text-gray-500 dark:text-gray-400">
+															({{ number_format(($item->metadata_json['size'] ?? 0) / 1024, 2) }} KB)
+														</span>
+													</div>
+													<div class="flex items-center gap-2">
+														<a href="{{ route('portfolio-items.download', [$portfolio, $item]) }}"
+														   class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+															Download
+														</a>
+														@if($portfolio->status === 'draft')
+															<form method="POST" action="{{ route('portfolio-items.destroy', [$portfolio, $item]) }}"
+																  onsubmit="return confirm('Are you sure you want to delete this file?');">
+																@csrf
+																@method('DELETE')
+																<button type="submit" class="text-red-600 dark:text-red-400 hover:underline text-sm">
+																	Delete
+																</button>
+															</form>
+														@endif
+													</div>
+												</div>
+											@endforeach
+										</div>
+									@endif
+								</div>
+
+								{{-- Upload form (only show if draft) --}}
+								@if($portfolio->status === 'draft')
+									<div class="ml-4">
+										<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+											@csrf
+											<input type="hidden" name="type" value="{{ $type }}">
+											<input type="file" name="file" required
+												   class="text-sm text-gray-500 dark:text-gray-400
+														  file:mr-4 file:py-2 file:px-4
+														  file:rounded file:border-0
+														  file:text-sm file:font-semibold
+														  file:bg-indigo-50 file:text-indigo-700
+														  hover:file:bg-indigo-100
+														  dark:file:bg-indigo-900 dark:file:text-indigo-200">
+											<x-button type="submit" class="whitespace-nowrap">
+												Upload
+											</x-button>
+										</form>
+									</div>
+								@endif
+							</div>
+						</div>
+					@endforeach
+				</div>
 			</div>
 		</div>
 	</div>

@@ -39,6 +39,16 @@ class Portfolio extends Model
     {
         return $this->hasMany(PortfolioItem::class);
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function latestReview(): ?\App\Models\Review
+    {
+        return $this->reviews()->latest()->first();
+    }
 }
 
 

@@ -14,7 +14,7 @@ class CourseSeeder extends Seeder
     {
         $courses = [
             ['code' => 'DCvET', 'name' => 'Diploma in Civil Engineering Technology'],
-            ['code' => 'DCET', 'name' => 'Diploma in Computer Engineering Technology'],
+            ['code' => 'DCPET', 'name' => 'Diploma in Computer Engineering Technology'],
             ['code' => 'DEET', 'name' => 'Diploma in Electrical Engineering Technology'],
             ['code' => 'DECET', 'name' => 'Diploma in Electronics and Communications Eng. Tech.'],
             ['code' => 'DICT', 'name' => 'Diploma in Information and Communication Technology'],

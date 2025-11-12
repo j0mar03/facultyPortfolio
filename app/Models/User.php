@@ -30,6 +30,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'course_id',
     ];
 
     /**
@@ -64,5 +65,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(\App\Models\Course::class);
+    }
+
+    // Many-to-many relationship for chairs managing multiple courses
+    public function managedCourses()
+    {
+        return $this->belongsToMany(\App\Models\Course::class, 'course_user')
+                    ->withTimestamps();
     }
 }

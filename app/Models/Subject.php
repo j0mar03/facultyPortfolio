@@ -15,8 +15,15 @@ class Subject extends Model
         'course_id',
         'code',
         'title',
+        'description',
         'year_level',
         'term',
+        'lec_hours',
+        'lab_hours',
+        'credit_units',
+        'tuition_hours',
+        'prereq',
+        'coreq',
     ];
 
     public function course(): BelongsTo

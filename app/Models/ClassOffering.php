@@ -17,6 +17,9 @@ class ClassOffering extends Model
         'term',
         'section',
         'faculty_id',
+        'assignment_document',
+        'instructional_material',
+        'syllabus',
     ];
 
     public function subject(): BelongsTo

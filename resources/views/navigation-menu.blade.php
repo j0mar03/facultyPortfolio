@@ -15,6 +15,30 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if(Auth::user()->role ?? '' === 'faculty')
+                        <x-nav-link href="{{ route('faculty.class-offerings') }}" :active="request()->routeIs('faculty.class-offerings')">
+                            {{ __('My Class Offerings') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(in_array(Auth::user()->role ?? '', ['chair', 'admin']))
+                        <x-nav-link href="{{ route('reviews.index') }}" :active="request()->routeIs('reviews.*')">
+                            {{ __('Review Queue') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->role ?? '' === 'chair')
+                        <x-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
+                            {{ __('Subjects') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(in_array(Auth::user()->role ?? '', ['admin', 'auditor']))
+                        <x-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -142,6 +166,30 @@
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if(Auth::user()->role ?? '' === 'faculty')
+                <x-responsive-nav-link href="{{ route('faculty.class-offerings') }}" :active="request()->routeIs('faculty.class-offerings')">
+                    {{ __('My Class Offerings') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(in_array(Auth::user()->role ?? '', ['chair', 'admin']))
+                <x-responsive-nav-link href="{{ route('reviews.index') }}" :active="request()->routeIs('reviews.*')">
+                    {{ __('Review Queue') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->role ?? '' === 'chair')
+                <x-responsive-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
+                    {{ __('Subjects') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(in_array(Auth::user()->role ?? '', ['admin', 'auditor']))
+                <x-responsive-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

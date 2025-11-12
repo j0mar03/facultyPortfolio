@@ -50,6 +50,34 @@ class PortfolioController extends Controller
         $portfolio->load(['classOffering.subject.course', 'items']);
         return view('portfolio.show', compact('portfolio'));
     }
+
+    public function submit(Portfolio $portfolio): RedirectResponse
+    {
+        abort_unless($portfolio->user_id === Auth::id(), 403);
+        abort_if($portfolio->status !== 'draft', 403, 'Portfolio already submitted');
+
+        // Check if all required items are uploaded
+        $requiredTypes = config('portfolio.required_items');
+        $uploadedTypes = $portfolio->items()->pluck('type')->unique()->toArray();
+        $missingTypes = array_diff($requiredTypes, $uploadedTypes);
+
+        if (!empty($missingTypes)) {
+            $missingLabels = array_map(function ($type) {
+                return config("portfolio.item_types.{$type}", $type);
+            }, $missingTypes);
+
+            return back()->withErrors([
+                'submit' => 'Missing required documents: ' . implode(', ', $missingLabels)
+            ]);
+        }
+
+        $portfolio->update([
+            'status' => 'submitted',
+            'submitted_at' => now(),
+        ]);
+
+        return back()->with('status', 'Portfolio submitted successfully!');
+    }
 }
 
 
