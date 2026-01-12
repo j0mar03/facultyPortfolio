@@ -15,46 +15,66 @@ class PortfolioItemController extends Controller
     public function store(Request $request, Portfolio $portfolio): RedirectResponse
     {
         abort_unless($portfolio->user_id === Auth::id(), 403);
-        abort_if($portfolio->status !== 'draft', 403, 'Cannot upload to submitted portfolio');
+        abort_if(!in_array($portfolio->status, ['draft', 'rejected']), 403, 'Cannot upload to submitted or approved portfolio');
 
         $data = $request->validate([
             'type' => ['required', 'string', 'in:' . implode(',', array_keys(config('portfolio.item_types')))],
             'title' => ['nullable', 'string', 'max:255'],
-            'file' => ['required', 'file', 'max:' . config('portfolio.max_file_size')],
+            'files' => ['required', 'array'],
+            'files.*' => ['required', 'file', 'max:' . config('portfolio.max_file_size')],
         ]);
 
-        $file = $request->file('file');
-        $extension = $file->getClientOriginalExtension();
+        $uploadedCount = 0;
+        $errors = [];
 
-        if (!in_array(strtolower($extension), config('portfolio.allowed_extensions'))) {
-            return back()->withErrors(['file' => 'File type not allowed.']);
+        foreach ($request->file('files') as $file) {
+            $extension = $file->getClientOriginalExtension();
+
+            if (!in_array(strtolower($extension), config('portfolio.allowed_extensions'))) {
+                $errors[] = $file->getClientOriginalName() . ' - File type not allowed.';
+                continue;
+            }
+
+            $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs(
+                "portfolios/{$portfolio->user_id}/{$portfolio->id}/{$data['type']}",
+                $fileName,
+                'local'
+            );
+
+            PortfolioItem::create([
+                'portfolio_id' => $portfolio->id,
+                'type' => $data['type'],
+                'title' => $data['title'] ?? $file->getClientOriginalName(),
+                'file_path' => $filePath,
+                'metadata_json' => [
+                    'original_name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                ],
+            ]);
+
+            $uploadedCount++;
         }
 
-        $fileName = time() . '_' . $file->getClientOriginalName();
-        $filePath = $file->storeAs(
-            "portfolios/{$portfolio->user_id}/{$portfolio->id}/{$data['type']}",
-            $fileName,
-            'local'
-        );
+        if (!empty($errors)) {
+            return back()->withErrors(['files' => $errors])->with('status', "{$uploadedCount} file(s) uploaded successfully.");
+        }
 
-        PortfolioItem::create([
-            'portfolio_id' => $portfolio->id,
-            'type' => $data['type'],
-            'title' => $data['title'] ?? $file->getClientOriginalName(),
-            'file_path' => $filePath,
-            'metadata_json' => [
-                'original_name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'mime_type' => $file->getMimeType(),
-            ],
-        ]);
-
-        return back()->with('status', 'File uploaded successfully.');
+        return back()->with('status', "{$uploadedCount} file(s) uploaded successfully.");
     }
 
     public function download(Portfolio $portfolio, PortfolioItem $item): StreamedResponse
     {
-        abort_unless($portfolio->user_id === Auth::id(), 403);
+        $user = Auth::user();
+
+        // Allow access if:
+        // 1. User is the portfolio owner, OR
+        // 2. User is chair/admin/auditor reviewing the portfolio
+        $canDownload = $portfolio->user_id === $user->id
+            || in_array($user->role, ['chair', 'admin', 'auditor']);
+
+        abort_unless($canDownload, 403, 'You do not have permission to download this file');
         abort_unless($item->portfolio_id === $portfolio->id, 404);
 
         if (!Storage::disk('local')->exists($item->file_path)) {
@@ -71,7 +91,7 @@ class PortfolioItemController extends Controller
     {
         abort_unless($portfolio->user_id === Auth::id(), 403);
         abort_unless($item->portfolio_id === $portfolio->id, 404);
-        abort_if($portfolio->status !== 'draft', 403, 'Cannot delete from submitted portfolio');
+        abort_if(!in_array($portfolio->status, ['draft', 'rejected']), 403, 'Cannot delete from submitted or approved portfolio');
 
         if (Storage::disk('local')->exists($item->file_path)) {
             Storage::disk('local')->delete($item->file_path);
@@ -80,5 +100,51 @@ class PortfolioItemController extends Controller
         $item->delete();
 
         return back()->with('status', 'File deleted successfully.');
+    }
+
+    public function update(Request $request, Portfolio $portfolio, PortfolioItem $item): RedirectResponse
+    {
+        $user = Auth::user();
+
+        // Allow portfolio owner or chair/admin to update
+        $canUpdate = $portfolio->user_id === $user->id || in_array($user->role, ['chair', 'admin']);
+        abort_unless($canUpdate, 403, 'You do not have permission to update this document');
+        abort_unless($item->portfolio_id === $portfolio->id, 404);
+
+        $data = $request->validate([
+            'file' => ['required', 'file', 'max:' . config('portfolio.max_file_size')],
+        ]);
+
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+
+        if (!in_array(strtolower($extension), config('portfolio.allowed_extensions'))) {
+            return back()->withErrors(['file' => 'File type not allowed.']);
+        }
+
+        // Delete old file
+        if (Storage::disk('local')->exists($item->file_path)) {
+            Storage::disk('local')->delete($item->file_path);
+        }
+
+        // Upload new file
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs(
+            "portfolios/{$portfolio->user_id}/{$portfolio->id}/{$item->type}",
+            $fileName,
+            'local'
+        );
+
+        // Update item
+        $item->update([
+            'file_path' => $filePath,
+            'metadata_json' => [
+                'original_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+            ],
+        ]);
+
+        return back()->with('status', 'Document updated successfully.');
     }
 }

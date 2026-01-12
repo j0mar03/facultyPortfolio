@@ -28,9 +28,17 @@
                         </x-nav-link>
                     @endif
 
-                    @if(Auth::user()->role ?? '' === 'chair')
+                    @php
+                        $userRole = Auth::user()->role ?? '';
+                        $isChair = $userRole === 'chair';
+                    @endphp
+
+                    @if($isChair)
                         <x-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                             {{ __('Subjects') }}
+                        </x-nav-link>
+                        <x-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.*')">
+                            {{ __('Reports') }}
                         </x-nav-link>
                     @endif
 
@@ -179,9 +187,17 @@
                 </x-responsive-nav-link>
             @endif
 
-            @if(Auth::user()->role ?? '' === 'chair')
+            @php
+                $userRoleResponsive = Auth::user()->role ?? '';
+                $isChairResponsive = $userRoleResponsive === 'chair';
+            @endphp
+
+            @if($isChairResponsive)
                 <x-responsive-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                     {{ __('Subjects') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.*')">
+                    {{ __('Reports') }}
                 </x-responsive-nav-link>
             @endif
 

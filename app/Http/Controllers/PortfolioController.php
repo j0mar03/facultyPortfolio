@@ -54,7 +54,7 @@ class PortfolioController extends Controller
     public function submit(Portfolio $portfolio): RedirectResponse
     {
         abort_unless($portfolio->user_id === Auth::id(), 403);
-        abort_if($portfolio->status !== 'draft', 403, 'Portfolio already submitted');
+        abort_if(!in_array($portfolio->status, ['draft', 'rejected']), 403, 'Portfolio already submitted or approved');
 
         // Check if all required items are uploaded
         $requiredTypes = config('portfolio.required_items');
@@ -76,7 +76,11 @@ class PortfolioController extends Controller
             'submitted_at' => now(),
         ]);
 
-        return back()->with('status', 'Portfolio submitted successfully!');
+        $message = $portfolio->wasChanged('status') && $portfolio->getOriginal('status') === 'rejected'
+            ? 'Portfolio resubmitted successfully!'
+            : 'Portfolio submitted successfully!';
+
+        return back()->with('status', $message);
     }
 }
 

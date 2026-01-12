@@ -70,8 +70,16 @@ class SubjectController extends Controller
 
     public function show(Subject $subject): View
     {
-        abort_unless(Auth::user()->role === 'chair', 403);
-        abort_unless($subject->course_id === Auth::user()->course_id, 403);
+        $user = Auth::user();
+        abort_unless($user->role === 'chair', 403);
+
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = $user->managedCourses->contains($subject->course_id);
+        if (!$managesCourse && $user->course_id) {
+            // Fallback to old single course_id field
+            $managesCourse = $user->course_id === $subject->course_id;
+        }
+        abort_unless($managesCourse, 403, 'You do not manage this course');
 
         $subject->load('classOfferings.faculty');
 
@@ -83,8 +91,16 @@ class SubjectController extends Controller
 
     public function assignFaculty(Request $request, Subject $subject): RedirectResponse
     {
-        abort_unless(Auth::user()->role === 'chair', 403);
-        abort_unless($subject->course_id === Auth::user()->course_id, 403);
+        $user = Auth::user();
+        abort_unless($user->role === 'chair', 403);
+
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = $user->managedCourses->contains($subject->course_id);
+        if (!$managesCourse && $user->course_id) {
+            // Fallback to old single course_id field
+            $managesCourse = $user->course_id === $subject->course_id;
+        }
+        abort_unless($managesCourse, 403, 'You do not manage this course');
 
         $data = $request->validate([
             'faculty_id' => ['required', 'exists:users,id'],
@@ -98,9 +114,24 @@ class SubjectController extends Controller
         $faculty = User::findOrFail($data['faculty_id']);
         abort_unless(in_array($faculty->role, ['faculty', 'chair']), 403, 'Selected user must be a faculty member or chair');
 
+        // Find or create the class offering
+        $classOffering = ClassOffering::firstOrNew([
+            'subject_id' => $subject->id,
+            'academic_year' => $data['academic_year'],
+            'term' => $data['term'],
+            'section' => $data['section'],
+        ]);
+
+        // Update faculty assignment
+        $classOffering->faculty_id = $data['faculty_id'];
+
         // Handle file upload
-        $assignmentDocPath = null;
         if ($request->hasFile('assignment_document')) {
+            // Delete old document if exists
+            if ($classOffering->assignment_document && \Storage::disk('local')->exists($classOffering->assignment_document)) {
+                \Storage::disk('local')->delete($classOffering->assignment_document);
+            }
+
             $file = $request->file('assignment_document');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $assignmentDocPath = $file->storeAs(
@@ -108,24 +139,26 @@ class SubjectController extends Controller
                 $fileName,
                 'local'
             );
+            $classOffering->assignment_document = $assignmentDocPath;
         }
 
-        ClassOffering::create([
-            'subject_id' => $subject->id,
-            'faculty_id' => $data['faculty_id'],
-            'academic_year' => $data['academic_year'],
-            'term' => $data['term'],
-            'section' => $data['section'],
-            'assignment_document' => $assignmentDocPath,
-        ]);
+        $classOffering->save();
 
-        return back()->with('status', 'Class offering assigned successfully!');
+        return back()->with('status', 'Faculty assigned successfully!');
     }
 
     public function removeAssignment(ClassOffering $classOffering): RedirectResponse
     {
-        abort_unless(Auth::user()->role === 'chair', 403);
-        abort_unless($classOffering->subject->course_id === Auth::user()->course_id, 403);
+        $user = Auth::user();
+        abort_unless($user->role === 'chair', 403);
+
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = $user->managedCourses->contains($classOffering->subject->course_id);
+        if (!$managesCourse && $user->course_id) {
+            // Fallback to old single course_id field
+            $managesCourse = $user->course_id === $classOffering->subject->course_id;
+        }
+        abort_unless($managesCourse, 403, 'You do not manage this course');
 
         $classOffering->delete();
 
@@ -136,10 +169,20 @@ class SubjectController extends Controller
     {
         $user = Auth::user();
 
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = false;
+        if ($user->role === 'chair') {
+            $managesCourse = $user->managedCourses->contains($classOffering->subject->course_id);
+            if (!$managesCourse && $user->course_id) {
+                // Fallback to old single course_id field
+                $managesCourse = $user->course_id === $classOffering->subject->course_id;
+            }
+        }
+
         // Allow chair (of the same course), admin, or the assigned faculty to download
         abort_unless(
             $user->role === 'admin' ||
-            ($user->role === 'chair' && $classOffering->subject->course_id === $user->course_id) ||
+            ($user->role === 'chair' && $managesCourse) ||
             ($user->role === 'faculty' && $classOffering->faculty_id === $user->id),
             403
         );
@@ -155,8 +198,16 @@ class SubjectController extends Controller
 
     public function uploadAssignment(Request $request, ClassOffering $classOffering): RedirectResponse
     {
-        abort_unless(Auth::user()->role === 'chair', 403);
-        abort_unless($classOffering->subject->course_id === Auth::user()->course_id, 403);
+        $user = Auth::user();
+        abort_unless($user->role === 'chair', 403);
+
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = $user->managedCourses->contains($classOffering->subject->course_id);
+        if (!$managesCourse && $user->course_id) {
+            // Fallback to old single course_id field
+            $managesCourse = $user->course_id === $classOffering->subject->course_id;
+        }
+        abort_unless($managesCourse, 403, 'You do not manage this course');
 
         $data = $request->validate([
             'assignment_document' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'], // 5MB max
@@ -247,10 +298,20 @@ class SubjectController extends Controller
     {
         $user = Auth::user();
 
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = false;
+        if ($user->role === 'chair') {
+            $managesCourse = $user->managedCourses->contains($classOffering->subject->course_id);
+            if (!$managesCourse && $user->course_id) {
+                // Fallback to old single course_id field
+                $managesCourse = $user->course_id === $classOffering->subject->course_id;
+            }
+        }
+
         // Allow chair (of the same course), admin, or the assigned faculty to download
         abort_unless(
             $user->role === 'admin' ||
-            ($user->role === 'chair' && $classOffering->subject->course_id === $user->course_id) ||
+            ($user->role === 'chair' && $managesCourse) ||
             ($user->role === 'faculty' && $classOffering->faculty_id === $user->id),
             403
         );

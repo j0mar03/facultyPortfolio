@@ -23,26 +23,37 @@
 			</div>
 			@endif
 
-			{{-- Academic Year Filter --}}
+			{{-- Academic Year Filter & Document Toggle --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
-				<form method="GET" action="{{ route('chair.subjects.index') }}" class="flex items-center gap-4">
-					<input type="hidden" name="course_id" value="{{ $selectedCourse->id }}">
-					<label for="academic_year" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-						Academic Year:
-					</label>
-					<select name="academic_year" id="academic_year"
-							class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-							onchange="this.form.submit()">
-						@foreach($availableYears as $year)
-							<option value="{{ $year }}" {{ $selectedYear === $year ? 'selected' : '' }}>
-								{{ $year }}
-							</option>
-						@endforeach
-					</select>
-					<span class="text-sm text-gray-500 dark:text-gray-400">
-						Showing portfolios for {{ $selectedYear }}
-					</span>
-				</form>
+				<div class="flex items-center justify-between flex-wrap gap-4">
+					<form method="GET" action="{{ route('chair.subjects.index') }}" class="flex items-center gap-4">
+						<input type="hidden" name="course_id" value="{{ $selectedCourse->id }}">
+						<label for="academic_year" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+							Academic Year:
+						</label>
+						<select name="academic_year" id="academic_year"
+								class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+								onchange="this.form.submit()">
+							@foreach($availableYears as $year)
+								<option value="{{ $year }}" {{ $selectedYear === $year ? 'selected' : '' }}>
+									{{ $year }}
+								</option>
+							@endforeach
+						</select>
+						<span class="text-sm text-gray-500 dark:text-gray-400">
+							Showing portfolios for {{ $selectedYear }}
+						</span>
+					</form>
+
+					{{-- Document Columns Toggle --}}
+					<div class="flex items-center gap-2">
+						<label class="inline-flex items-center cursor-pointer">
+							<input type="checkbox" id="toggleDocuments" class="sr-only peer" checked>
+							<div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+							<span class="ms-3 text-sm font-medium text-gray-700 dark:text-gray-300">Show Documents</span>
+						</label>
+					</div>
+				</div>
 			</div>
 
 			@foreach($subjects as $groupName => $groupSubjects)
@@ -57,9 +68,9 @@
 									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Title</th>
 									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Units</th>
 									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Assigned Faculty</th>
-									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">IM</th>
-									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Teaching Load</th>
-									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Syllabus</th>
+									<th class="document-column px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">IM</th>
+									<th class="document-column px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Teaching Load</th>
+									<th class="document-column px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Syllabus</th>
 									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Portfolio Status</th>
 									<th class="px-4 py-2"></th>
 								</tr>
@@ -97,7 +108,7 @@
 											@endif
 										</td>
 										{{-- IM Column --}}
-										<td class="px-4 py-3 text-sm">
+										<td class="document-column px-4 py-3 text-sm">
 											@if($subject->classOfferings->isEmpty())
 												<span class="text-gray-400 dark:text-gray-500">-</span>
 											@else
@@ -119,7 +130,7 @@
 											@endif
 										</td>
 										{{-- Teaching Load Column --}}
-										<td class="px-4 py-3 text-sm">
+										<td class="document-column px-4 py-3 text-sm">
 											@if($subject->classOfferings->isEmpty())
 												<span class="text-gray-400 dark:text-gray-500">-</span>
 											@else
@@ -141,7 +152,7 @@
 											@endif
 										</td>
 										{{-- Syllabus Column --}}
-										<td class="px-4 py-3 text-sm">
+										<td class="document-column px-4 py-3 text-sm">
 											@if($subject->classOfferings->isEmpty())
 												<span class="text-gray-400 dark:text-gray-500">-</span>
 											@else
@@ -215,4 +226,35 @@
 			@endforeach
 		</div>
 	</div>
+
+	{{-- Document Toggle Script --}}
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const toggle = document.getElementById('toggleDocuments');
+			const documentColumns = document.querySelectorAll('.document-column');
+
+			// Load saved preference from localStorage
+			const showDocuments = localStorage.getItem('showDocuments');
+			if (showDocuments === 'false') {
+				toggle.checked = false;
+				documentColumns.forEach(col => col.style.display = 'none');
+			}
+
+			// Handle toggle change
+			toggle.addEventListener('change', function() {
+				const isChecked = this.checked;
+
+				documentColumns.forEach(col => {
+					if (isChecked) {
+						col.style.display = '';
+					} else {
+						col.style.display = 'none';
+					}
+				});
+
+				// Save preference to localStorage
+				localStorage.setItem('showDocuments', isChecked);
+			});
+		});
+	</script>
 </x-app-layout>

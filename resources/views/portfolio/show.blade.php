@@ -27,11 +27,11 @@
 							</p>
 						@endif
 					</div>
-					@if($portfolio->status === 'draft')
-						<form method="POST" action="{{ route('portfolios.submit', $portfolio) }}" onsubmit="return confirm('Are you sure you want to submit this portfolio? You cannot edit it after submission.');">
+					@if(in_array($portfolio->status, ['draft', 'rejected']))
+						<form method="POST" action="{{ route('portfolios.submit', $portfolio) }}" onsubmit="return confirm('Are you sure you want to {{ $portfolio->status === 'rejected' ? 're' : '' }}submit this portfolio? You cannot edit it after submission.');">
 							@csrf
 							<x-button type="submit" class="bg-green-600 hover:bg-green-700">
-								Submit for Review
+								{{ $portfolio->status === 'rejected' ? 'Resubmit for Review' : 'Submit for Review' }}
 							</x-button>
 						</form>
 					@endif
@@ -65,6 +65,13 @@
 						</div>
 						@if($latestReview->remarks)
 							<p class="text-sm text-gray-700 dark:text-gray-300"><strong>Remarks:</strong> {{ $latestReview->remarks }}</p>
+						@endif
+						@if($portfolio->status === 'rejected')
+							<div class="mt-3 pt-3 border-t border-red-200 dark:border-red-800">
+								<p class="text-sm text-gray-700 dark:text-gray-300">
+									<strong>Action Required:</strong> Please review the feedback above, update your documents as needed, and resubmit your portfolio for review.
+								</p>
+							</div>
 						@endif
 					</div>
 				@endif
@@ -129,7 +136,7 @@
 														   class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
 															Download
 														</a>
-														@if($portfolio->status === 'draft')
+														@if(in_array($portfolio->status, ['draft', 'rejected']))
 															<form method="POST" action="{{ route('portfolio-items.destroy', [$portfolio, $item]) }}"
 																  onsubmit="return confirm('Are you sure you want to delete this file?');">
 																@csrf
@@ -146,23 +153,38 @@
 									@endif
 								</div>
 
-								{{-- Upload form (only show if draft) --}}
-								@if($portfolio->status === 'draft')
+								{{-- Upload form (only show if draft or rejected) --}}
+								@if(in_array($portfolio->status, ['draft', 'rejected']))
 									<div class="ml-4">
-										<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+										<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex flex-col gap-2">
 											@csrf
 											<input type="hidden" name="type" value="{{ $type }}">
-											<input type="file" name="file" required
-												   class="text-sm text-gray-500 dark:text-gray-400
-														  file:mr-4 file:py-2 file:px-4
-														  file:rounded file:border-0
-														  file:text-sm file:font-semibold
-														  file:bg-indigo-50 file:text-indigo-700
-														  hover:file:bg-indigo-100
-														  dark:file:bg-indigo-900 dark:file:text-indigo-200">
-											<x-button type="submit" class="whitespace-nowrap">
-												Upload
-											</x-button>
+											<div class="flex items-center gap-2">
+												<input type="file" name="files[]" multiple required
+													   class="text-sm text-gray-500 dark:text-gray-400
+															  file:mr-4 file:py-2 file:px-4
+															  file:rounded file:border-0
+															  file:text-sm file:font-semibold
+															  file:bg-indigo-50 file:text-indigo-700
+															  hover:file:bg-indigo-100
+															  dark:file:bg-indigo-900 dark:file:text-indigo-200">
+												<x-button type="submit" class="whitespace-nowrap">
+													Upload
+												</x-button>
+											</div>
+											@error('files')
+												<div class="text-xs text-red-600 dark:text-red-400">
+													@if(is_array($message))
+														<ul class="list-disc list-inside">
+															@foreach($message as $error)
+																<li>{{ $error }}</li>
+															@endforeach
+														</ul>
+													@else
+														{{ $message }}
+													@endif
+												</div>
+											@enderror
 										</form>
 									</div>
 								@endif

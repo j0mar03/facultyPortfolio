@@ -119,11 +119,47 @@
 													({{ number_format(($item->metadata_json['size'] ?? 0) / 1024, 2) }} KB)
 												</span>
 											</div>
-											<a href="{{ route('portfolio-items.download', [$portfolio, $item]) }}"
-											   class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
-												Download
-											</a>
+											<div class="flex items-center gap-2">
+												<a href="{{ route('portfolio-items.download', [$portfolio, $item]) }}"
+												   class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+													Download
+												</a>
+												@if(in_array(Auth::user()->role, ['chair', 'admin']))
+													<button type="button" onclick="document.getElementById('update-form-{{ $item->id }}').classList.toggle('hidden')"
+														class="text-green-600 dark:text-green-400 hover:underline text-sm">
+														Update
+													</button>
+												@endif
+											</div>
 										</div>
+
+										{{-- Update Form (hidden by default) --}}
+										@if(in_array(Auth::user()->role, ['chair', 'admin']))
+											<div id="update-form-{{ $item->id }}" class="hidden ml-7 mt-2 p-3 bg-gray-100 dark:bg-gray-600 rounded">
+												<form method="POST" action="{{ route('portfolio-items.update', [$portfolio, $item]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+													@csrf
+													<div class="flex-1">
+														<label class="text-xs text-gray-600 dark:text-gray-300 mb-1 block">Select new file to replace:</label>
+														<input type="file" name="file" required
+															   class="text-sm text-gray-500 dark:text-gray-400
+																	  file:mr-2 file:py-1 file:px-3
+																	  file:rounded file:border-0
+																	  file:text-xs file:font-semibold
+																	  file:bg-green-50 file:text-green-700
+																	  hover:file:bg-green-100
+																	  dark:file:bg-green-900 dark:file:text-green-200">
+													</div>
+													<button type="submit"
+															class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded">
+														Upload
+													</button>
+													<button type="button" onclick="document.getElementById('update-form-{{ $item->id }}').classList.add('hidden')"
+															class="px-3 py-1.5 bg-gray-400 hover:bg-gray-500 text-white text-xs font-semibold rounded">
+														Cancel
+													</button>
+												</form>
+											</div>
+										@endif
 									@endforeach
 								</div>
 							@else

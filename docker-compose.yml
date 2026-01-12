@@ -6,6 +6,8 @@ services:
     container_name: facultyportfolio-app
     user: "${UID:-1000}:${GID:-1000}"
     working_dir: /var/www/html
+    ports:
+      - "5173:5173"
     volumes:
       - ./:/var/www/html
       - composer-cache:/tmp/composer-cache
@@ -21,6 +23,7 @@ services:
     container_name: facultyportfolio-web
     ports:
       - "8081:80"
+      - "8443:443"
     depends_on:
       - app
     volumes:

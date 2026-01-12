@@ -43,6 +43,9 @@ Route::middleware([
     Route::get('/portfolios/{portfolio}/items/{item}/download', [\App\Http\Controllers\PortfolioItemController::class, 'download'])
         ->name('portfolio-items.download');
 
+    Route::post('/portfolios/{portfolio}/items/{item}/update', [\App\Http\Controllers\PortfolioItemController::class, 'update'])
+        ->name('portfolio-items.update');
+
     Route::delete('/portfolios/{portfolio}/items/{item}', [\App\Http\Controllers\PortfolioItemController::class, 'destroy'])
         ->name('portfolio-items.destroy');
 
@@ -76,6 +79,12 @@ Route::middleware([
             ->name('subjects.upload-document');
         Route::get('/subjects/documents/{classOffering}/{type}', [\App\Http\Controllers\Chair\SubjectController::class, 'downloadDocument'])
             ->name('subjects.download-document');
+
+        // Reports routes
+        Route::get('/reports', [\App\Http\Controllers\Chair\ReportController::class, 'index'])
+            ->name('reports.index');
+        Route::get('/reports/download-all', [\App\Http\Controllers\Chair\ReportController::class, 'downloadAll'])
+            ->name('reports.download-all');
     });
 
     // Admin routes
