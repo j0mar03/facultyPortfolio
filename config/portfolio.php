@@ -22,6 +22,7 @@ return [
         'sample_ims',
         'acknowledgement',
         'attendance',
+        'class_records',
     ],
 
     /*
@@ -44,6 +45,7 @@ return [
         'sample_ims' => 'Sample Instructional Materials',
         'acknowledgement' => 'Acknowledgement Receipt',
         'attendance' => 'Attendance Records',
+        'class_records' => 'Class Records',
         'other' => 'Other Documents',
     ],
 
