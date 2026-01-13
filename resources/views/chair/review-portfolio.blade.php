@@ -120,8 +120,13 @@
 												</span>
 											</div>
 											<div class="flex items-center gap-2">
-												<a href="{{ route('portfolio-items.download', [$portfolio, $item]) }}"
+												<a href="{{ route('portfolio-items.preview', [$portfolio, $item]) }}"
+												   target="_blank"
 												   class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+													Preview
+												</a>
+												<a href="{{ route('portfolio-items.download', [$portfolio, $item]) }}"
+												   class="text-gray-600 dark:text-gray-400 hover:underline text-sm">
 													Download
 												</a>
 												@if(in_array(Auth::user()->role, ['chair', 'admin']))

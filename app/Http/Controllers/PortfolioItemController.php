@@ -87,6 +87,43 @@ class PortfolioItemController extends Controller
         return Storage::disk('local')->download($item->file_path, $fileName);
     }
 
+    public function preview(Portfolio $portfolio, PortfolioItem $item)
+    {
+        $user = Auth::user();
+
+        // Allow access if:
+        // 1. User is the portfolio owner, OR
+        // 2. User is chair/admin/auditor reviewing the portfolio
+        $canPreview = $portfolio->user_id === $user->id
+            || in_array($user->role, ['chair', 'admin', 'auditor']);
+
+        abort_unless($canPreview, 403, 'You do not have permission to preview this file');
+        abort_unless($item->portfolio_id === $portfolio->id, 404);
+
+        if (!Storage::disk('local')->exists($item->file_path)) {
+            abort(404, 'File not found');
+        }
+
+        $metadata = $item->metadata_json ?? [];
+        $fileName = $metadata['original_name'] ?? basename($item->file_path);
+        $mimeType = $metadata['mime_type'] ?? Storage::disk('local')->mimeType($item->file_path);
+        $filePath = Storage::disk('local')->path($item->file_path);
+
+        // For PDFs and images, serve inline for preview
+        if (in_array($mimeType, ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+            return response()->file($filePath, [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            ]);
+        }
+
+        // For other file types, still serve inline but browser may download
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
+    }
+
     public function destroy(Portfolio $portfolio, PortfolioItem $item): RedirectResponse
     {
         abort_unless($portfolio->user_id === Auth::id(), 403);

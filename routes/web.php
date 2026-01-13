@@ -42,6 +42,9 @@ Route::middleware([
 
     Route::get('/portfolios/{portfolio}/items/{item}/download', [\App\Http\Controllers\PortfolioItemController::class, 'download'])
         ->name('portfolio-items.download');
+    
+    Route::get('/portfolios/{portfolio}/items/{item}/preview', [\App\Http\Controllers\PortfolioItemController::class, 'preview'])
+        ->name('portfolio-items.preview');
 
     Route::post('/portfolios/{portfolio}/items/{item}/update', [\App\Http\Controllers\PortfolioItemController::class, 'update'])
         ->name('portfolio-items.update');
