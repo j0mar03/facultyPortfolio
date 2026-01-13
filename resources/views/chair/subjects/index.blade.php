@@ -213,7 +213,7 @@
 											@endif
 										</td>
 										<td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-											<a href="{{ route('chair.subjects.show', $subject) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+											<a href="{{ route('chair.subjects.show', ['subject' => $subject, 'academic_year' => $selectedYear]) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
 												Manage
 											</a>
 										</td>

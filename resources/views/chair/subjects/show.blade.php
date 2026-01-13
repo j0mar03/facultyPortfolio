@@ -92,8 +92,8 @@
 							<label for="academic_year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 								Academic Year <span class="text-red-500">*</span>
 							</label>
-							<input type="text" name="academic_year" id="academic_year" value="{{ date('Y') }}-{{ date('Y') + 1 }}" required
-								   placeholder="2025-2026"
+							<input type="text" name="academic_year" id="academic_year" value="{{ $defaultAcademicYear ?? '2024-2025' }}" required
+								   placeholder="2024-2025"
 								   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
 							@error('academic_year')
 								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -106,9 +106,9 @@
 							</label>
 							<select name="term" id="term" required
 									class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-								<option value="1">Term 1</option>
-								<option value="2">Term 2</option>
-								<option value="3">Summer</option>
+								<option value="1" {{ $subject->term == 1 ? 'selected' : '' }}>Term 1</option>
+								<option value="2" {{ $subject->term == 2 ? 'selected' : '' }}>Term 2</option>
+								<option value="3" {{ $subject->term == 3 ? 'selected' : '' }}>Summer</option>
 							</select>
 							@error('term')
 								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>

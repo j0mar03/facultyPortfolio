@@ -35,9 +35,6 @@ class SubjectController extends Controller
 
         abort_unless($selectedCourse, 403, 'Invalid course selection');
 
-        // Get selected academic year or default to current
-        $selectedYear = $request->get('academic_year', date('Y') . '-' . (date('Y') + 1));
-
         // Get all available academic years from class offerings
         $availableYears = ClassOffering::whereHas('subject', function ($query) use ($selectedCourse) {
                 $query->where('course_id', $selectedCourse->id);
@@ -47,10 +44,14 @@ class SubjectController extends Controller
             ->sort()
             ->values();
 
-        // If no years exist, add current year as default
+        // If no years exist, add 2024-2025 as default
         if ($availableYears->isEmpty()) {
-            $availableYears = collect([date('Y') . '-' . (date('Y') + 1)]);
+            $availableYears = collect(['2024-2025']);
         }
+
+        // Get selected academic year or default to earliest available (or 2024-2025)
+        $defaultYear = $availableYears->first() ?? '2024-2025';
+        $selectedYear = $request->get('academic_year', $defaultYear);
 
         $subjects = Subject::where('course_id', $selectedCourse->id)
             ->with(['classOfferings' => function ($query) use ($selectedYear) {
@@ -68,7 +69,7 @@ class SubjectController extends Controller
         return view('chair.subjects.index', compact('subjects', 'chair', 'managedCourses', 'selectedCourse', 'availableYears', 'selectedYear'));
     }
 
-    public function show(Subject $subject): View
+    public function show(Request $request, Subject $subject): View
     {
         $user = Auth::user();
         abort_unless($user->role === 'chair', 403);
@@ -86,7 +87,10 @@ class SubjectController extends Controller
         // Get faculty and chairs who can be assigned (chairs can also teach)
         $availableFaculty = User::whereIn('role', ['faculty', 'chair'])->orderBy('name')->get();
 
-        return view('chair.subjects.show', compact('subject', 'availableFaculty'));
+        // Get default academic year from request or use 2024-2025
+        $defaultAcademicYear = $request->get('academic_year', '2024-2025');
+
+        return view('chair.subjects.show', compact('subject', 'availableFaculty', 'defaultAcademicYear'));
     }
 
     public function assignFaculty(Request $request, Subject $subject): RedirectResponse
