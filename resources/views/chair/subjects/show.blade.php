@@ -219,66 +219,90 @@
 							@enderror
 						</div>
 
-						{{-- Upload/Update Instructional Material (IM) --}}
+						{{-- Google Drive Link for Instructional Material (IM) --}}
 						<div class="mb-3 bg-gray-50 dark:bg-gray-700/50 rounded p-3">
 							<h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-								{{ $offering->instructional_material ? 'Update' : 'Upload' }} Instructional Material (IM)
+								{{ $offering->instructional_material ? 'Update' : 'Add' }} Instructional Material (IM) - Google Drive Link
 							</h5>
 							@if($offering->instructional_material)
 								<div class="mb-2">
-									<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'im']) }}"
-									   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-										</svg>
-										Download Current IM Document
-									</a>
+									@if(filter_var($offering->instructional_material, FILTER_VALIDATE_URL))
+										<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'im']) }}"
+										   target="_blank"
+										   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+											</svg>
+											View Current IM on Google Drive
+										</a>
+									@else
+										<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'im']) }}"
+										   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+											</svg>
+											Download Current IM Document
+										</a>
+									@endif
 								</div>
 							@endif
-							<form method="POST" action="{{ route('chair.subjects.upload-document', ['classOffering' => $offering, 'type' => 'im']) }}" enctype="multipart/form-data" class="flex items-end gap-2">
+							<form method="POST" action="{{ route('chair.subjects.upload-document', ['classOffering' => $offering, 'type' => 'im']) }}" class="flex items-end gap-2">
 								@csrf
 								<div class="flex-1">
-									<input type="file" name="document" accept=".pdf,.doc,.docx" required
+									<input type="url" name="google_drive_link" value="{{ filter_var($offering->instructional_material ?? '', FILTER_VALIDATE_URL) ? $offering->instructional_material : '' }}" 
+										   placeholder="https://drive.google.com/..." required
 										   class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX - Max 5MB</p>
+									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter Google Drive shareable link</p>
 								</div>
 								<x-button type="submit" class="shrink-0">
-									{{ $offering->instructional_material ? 'Update' : 'Upload' }}
+									{{ $offering->instructional_material ? 'Update' : 'Save' }}
 								</x-button>
 							</form>
-							@error('document')
+							@error('google_drive_link')
 								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
 							@enderror
 						</div>
 
-						{{-- Upload/Update Syllabus --}}
+						{{-- Google Drive Link for Syllabus --}}
 						<div class="mb-3 bg-gray-50 dark:bg-gray-700/50 rounded p-3">
 							<h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-								{{ $offering->syllabus ? 'Update' : 'Upload' }} Syllabus
+								{{ $offering->syllabus ? 'Update' : 'Add' }} Syllabus - Google Drive Link
 							</h5>
 							@if($offering->syllabus)
 								<div class="mb-2">
-									<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}"
-									   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-										</svg>
-										Download Current Syllabus
-									</a>
+									@if(filter_var($offering->syllabus, FILTER_VALIDATE_URL))
+										<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}"
+										   target="_blank"
+										   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+											</svg>
+											View Current Syllabus on Google Drive
+										</a>
+									@else
+										<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}"
+										   class="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+											</svg>
+											Download Current Syllabus
+										</a>
+									@endif
 								</div>
 							@endif
-							<form method="POST" action="{{ route('chair.subjects.upload-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}" enctype="multipart/form-data" class="flex items-end gap-2">
+							<form method="POST" action="{{ route('chair.subjects.upload-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}" class="flex items-end gap-2">
 								@csrf
 								<div class="flex-1">
-									<input type="file" name="document" accept=".pdf,.doc,.docx" required
+									<input type="url" name="google_drive_link" value="{{ filter_var($offering->syllabus ?? '', FILTER_VALIDATE_URL) ? $offering->syllabus : '' }}" 
+										   placeholder="https://drive.google.com/..." required
 										   class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX - Max 5MB</p>
+									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter Google Drive shareable link</p>
 								</div>
 								<x-button type="submit" class="shrink-0">
-									{{ $offering->syllabus ? 'Update' : 'Upload' }}
+									{{ $offering->syllabus ? 'Update' : 'Save' }}
 								</x-button>
 							</form>
-							@error('document')
+							@error('google_drive_link')
 								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
 							@enderror
 						</div>

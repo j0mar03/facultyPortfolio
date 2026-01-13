@@ -23,7 +23,7 @@
 			</div>
 			@endif
 
-			{{-- Academic Year Filter & Document Toggle --}}
+			{{-- Academic Year & Term Filter & Document Toggle --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
 				<div class="flex items-center justify-between flex-wrap gap-4">
 					<form method="GET" action="{{ route('chair.subjects.index') }}" class="flex items-center gap-4">
@@ -40,8 +40,23 @@
 								</option>
 							@endforeach
 						</select>
+						
+						<label for="term" class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-4">
+							Term:
+						</label>
+						<select name="term" id="term"
+								class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+								onchange="this.form.submit()">
+							<option value="">All Terms</option>
+							@foreach($availableTerms as $term)
+								<option value="{{ $term }}" {{ $selectedTerm !== null && $selectedTerm == $term ? 'selected' : '' }}>
+									Term {{ $term }}
+								</option>
+							@endforeach
+						</select>
+						
 						<span class="text-sm text-gray-500 dark:text-gray-400">
-							Showing portfolios for {{ $selectedYear }}
+							Showing {{ $selectedTerm !== null ? 'Term ' . $selectedTerm . ' for ' : '' }}{{ $selectedYear }}
 						</span>
 					</form>
 
@@ -116,14 +131,15 @@
 													<div class="mb-2 min-w-[120px]">
 														@if($offering->instructional_material)
 															<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'im']) }}"
+															   target="{{ filter_var($offering->instructional_material, FILTER_VALIDATE_URL) ? '_blank' : '_self' }}"
 															   class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
 																<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ filter_var($offering->instructional_material, FILTER_VALIDATE_URL) ? 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' : 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }}" />
 																</svg>
 																View
 															</a>
 														@else
-															<span class="text-xs text-gray-400 dark:text-gray-500">Not uploaded</span>
+															<span class="text-xs text-gray-400 dark:text-gray-500">Not linked</span>
 														@endif
 													</div>
 												@endforeach
@@ -160,14 +176,15 @@
 													<div class="mb-2 min-w-[120px]">
 														@if($offering->syllabus)
 															<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}"
+															   target="{{ filter_var($offering->syllabus, FILTER_VALIDATE_URL) ? '_blank' : '_self' }}"
 															   class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
 																<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ filter_var($offering->syllabus, FILTER_VALIDATE_URL) ? 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' : 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }}" />
 																</svg>
 																View
 															</a>
 														@else
-															<span class="text-xs text-gray-400 dark:text-gray-500">Not uploaded</span>
+															<span class="text-xs text-gray-400 dark:text-gray-500">Not linked</span>
 														@endif
 													</div>
 												@endforeach

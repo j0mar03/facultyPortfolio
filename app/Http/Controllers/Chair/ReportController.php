@@ -35,29 +35,27 @@ class ReportController extends Controller
 
         abort_unless($selectedCourse, 403, 'Invalid course selection');
 
-        // Get all available academic years from approved portfolios
-        $availableYears = Portfolio::whereHas('classOffering.subject', function ($query) use ($selectedCourse) {
+        // Get all available academic years from class offerings (not just approved portfolios)
+        $availableYears = \App\Models\ClassOffering::whereHas('subject', function ($query) use ($selectedCourse) {
                 $query->where('course_id', $selectedCourse->id);
             })
-            ->where('status', 'approved')
-            ->join('class_offerings', 'portfolios.class_offering_id', '=', 'class_offerings.id')
             ->distinct()
-            ->pluck('class_offerings.academic_year')
+            ->pluck('academic_year')
             ->sort()
             ->values();
 
-        // If no years exist, add current year as default
+        // If no years exist, add 2024-2025 as default
         if ($availableYears->isEmpty()) {
-            $availableYears = collect([date('Y') . '-' . (date('Y') + 1)]);
+            $availableYears = collect(['2024-2025']);
         }
 
-        // Select year: use request value if provided and valid; otherwise pick the latest available
+        // Select year: use request value if provided and valid; otherwise pick the earliest available
         $requestedYear = $request->get('academic_year');
         if ($requestedYear && $availableYears->contains($requestedYear)) {
             $selectedYear = $requestedYear;
         } else {
-            // fallback to latest available year
-            $selectedYear = $availableYears->last();
+            // fallback to earliest available year (or 2024-2025)
+            $selectedYear = $availableYears->first() ?? '2024-2025';
         }
 
         // Get all approved portfolios for the selected course and academic year
@@ -172,14 +170,26 @@ class ReportController extends Controller
                 $zip->addFile($filePath, $folderName . '/teaching_load/' . basename($offering->assignment_document));
             }
 
-            if ($offering->instructional_material && Storage::disk('local')->exists($offering->instructional_material)) {
-                $filePath = Storage::disk('local')->path($offering->instructional_material);
-                $zip->addFile($filePath, $folderName . '/instructional_material/' . basename($offering->instructional_material));
+            // Add instructional material if it exists (only if it's a file, not a Google Drive link)
+            if ($offering->instructional_material && !filter_var($offering->instructional_material, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('local')->exists($offering->instructional_material)) {
+                    $filePath = Storage::disk('local')->path($offering->instructional_material);
+                    $zip->addFile($filePath, $folderName . '/instructional_material/' . basename($offering->instructional_material));
+                }
+            } elseif ($offering->instructional_material && filter_var($offering->instructional_material, FILTER_VALIDATE_URL)) {
+                // Add Google Drive link to a text file
+                $zip->addFromString($folderName . '/instructional_material/google_drive_link.txt', 'Google Drive Link: ' . $offering->instructional_material);
             }
 
-            if ($offering->syllabus && Storage::disk('local')->exists($offering->syllabus)) {
-                $filePath = Storage::disk('local')->path($offering->syllabus);
-                $zip->addFile($filePath, $folderName . '/syllabus/' . basename($offering->syllabus));
+            // Add syllabus if it exists (only if it's a file, not a Google Drive link)
+            if ($offering->syllabus && !filter_var($offering->syllabus, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('local')->exists($offering->syllabus)) {
+                    $filePath = Storage::disk('local')->path($offering->syllabus);
+                    $zip->addFile($filePath, $folderName . '/syllabus/' . basename($offering->syllabus));
+                }
+            } elseif ($offering->syllabus && filter_var($offering->syllabus, FILTER_VALIDATE_URL)) {
+                // Add Google Drive link to a text file
+                $zip->addFromString($folderName . '/syllabus/google_drive_link.txt', 'Google Drive Link: ' . $offering->syllabus);
             }
         }
 

@@ -94,13 +94,30 @@
 							$isRequired = in_array($type, $requiredTypes);
 							$items = $uploadedItems->get($type, collect());
 							$hasUpload = $items->isNotEmpty();
+							
+							// Check if this is Syllabus or Sample IMs - these come from class offering Google Drive links
+							$isSyllabus = $type === 'syllabus';
+							$isSampleIMs = $type === 'sample_ims';
+							$isFromClassOffering = $isSyllabus || $isSampleIMs;
+							
+							// Get Google Drive link from class offering
+							$googleDriveLink = null;
+							if ($isSyllabus && $portfolio->classOffering->syllabus) {
+								$googleDriveLink = filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL) 
+									? $portfolio->classOffering->syllabus 
+									: null;
+							} elseif ($isSampleIMs && $portfolio->classOffering->instructional_material) {
+								$googleDriveLink = filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL) 
+									? $portfolio->classOffering->instructional_material 
+									: null;
+							}
 						@endphp
 
 						<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 							<div class="flex items-start justify-between">
 								<div class="flex-1">
 									<div class="flex items-center gap-2">
-										@if($hasUpload)
+										@if($hasUpload || ($isFromClassOffering && $googleDriveLink))
 											<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
 												<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
 											</svg>
@@ -114,11 +131,42 @@
 											@if($isRequired)
 												<span class="text-red-500">*</span>
 											@endif
+											@if($isFromClassOffering)
+												<span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Managed by Chair)</span>
+											@endif
 										</h4>
 									</div>
 
-									{{-- Display uploaded files --}}
-									@if($hasUpload)
+									{{-- Show Google Drive link for Syllabus and Sample IMs from class offering --}}
+									@if($isFromClassOffering && $googleDriveLink)
+										<div class="mt-3">
+											<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded px-3 py-2">
+												<div class="flex items-center gap-2">
+													<svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+													</svg>
+													<a href="{{ $googleDriveLink }}" target="_blank" 
+													   class="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
+														{{ $googleDriveLink }}
+													</a>
+												</div>
+												<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+													This link is managed by the Chair. Contact your Chair to update it.
+												</p>
+											</div>
+										</div>
+									@elseif($isFromClassOffering && !$googleDriveLink)
+										<div class="mt-3">
+											<div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded px-3 py-2">
+												<p class="text-sm text-yellow-800 dark:text-yellow-200">
+													No Google Drive link provided yet. Please contact your Chair to add the link.
+												</p>
+											</div>
+										</div>
+									@endif
+
+									{{-- Display uploaded files (for non-class-offering types or if user uploaded additional files) --}}
+									@if($hasUpload && !$isFromClassOffering)
 										<div class="mt-3 space-y-2">
 											@foreach($items as $item)
 												<div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded px-3 py-2">
@@ -153,8 +201,8 @@
 									@endif
 								</div>
 
-								{{-- Upload form (only show if draft or rejected) --}}
-								@if(in_array($portfolio->status, ['draft', 'rejected']))
+								{{-- Upload form (only show if draft or rejected, and NOT for Syllabus/Sample IMs) --}}
+								@if(in_array($portfolio->status, ['draft', 'rejected']) && !$isFromClassOffering)
 									<div class="ml-4">
 										<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex flex-col gap-2">
 											@csrf

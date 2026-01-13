@@ -53,7 +53,33 @@ class SubjectController extends Controller
         $defaultYear = $availableYears->first() ?? '2024-2025';
         $selectedYear = $request->get('academic_year', $defaultYear);
 
-        $subjects = Subject::where('course_id', $selectedCourse->id)
+        // Get all available terms from subjects for the selected course
+        $availableTerms = Subject::where('course_id', $selectedCourse->id)
+            ->distinct()
+            ->pluck('term')
+            ->sort()
+            ->values();
+
+        // If no terms exist, add default terms
+        if ($availableTerms->isEmpty()) {
+            $availableTerms = collect([1, 2, 3]);
+        }
+
+        // Get selected term or default to all (null means show all)
+        $selectedTerm = $request->get('term');
+        if ($selectedTerm !== null) {
+            $selectedTerm = (int) $selectedTerm;
+        }
+
+        // Build subjects query
+        $subjectsQuery = Subject::where('course_id', $selectedCourse->id);
+        
+        // Filter by term if selected
+        if ($selectedTerm !== null) {
+            $subjectsQuery->where('term', $selectedTerm);
+        }
+
+        $subjects = $subjectsQuery
             ->with(['classOfferings' => function ($query) use ($selectedYear) {
                 $query->where('academic_year', $selectedYear)
                       ->with(['faculty', 'portfolio.items']);
@@ -66,7 +92,7 @@ class SubjectController extends Controller
                 return "Year {$subject->year_level} - Term {$subject->term}";
             });
 
-        return view('chair.subjects.index', compact('subjects', 'chair', 'managedCourses', 'selectedCourse', 'availableYears', 'selectedYear'));
+        return view('chair.subjects.index', compact('subjects', 'chair', 'managedCourses', 'selectedCourse', 'availableYears', 'selectedYear', 'availableTerms', 'selectedTerm'));
     }
 
     public function show(Request $request, Subject $subject): View
@@ -257,44 +283,31 @@ class SubjectController extends Controller
 
         try {
             $data = $request->validate([
-                'document' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'], // 5MB max
+                'google_drive_link' => ['required', 'url', 'max:500'],
             ]);
 
             // Map type to database column
             $columnName = $type === 'im' ? 'instructional_material' : 'syllabus';
-            $folderName = $type === 'im' ? 'instructional_materials' : 'syllabi';
 
-            // Delete old document if exists
+            // Delete old file if it exists (for backward compatibility)
             if ($classOffering->$columnName && \Storage::disk('local')->exists($classOffering->$columnName)) {
                 \Storage::disk('local')->delete($classOffering->$columnName);
             }
 
-            // Handle file upload
-            $file = $request->file('document');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $documentPath = $file->storeAs(
-                $folderName . '/' . $classOffering->subject_id,
-                $fileName,
-                'local'
-            );
-
-            if (!$documentPath) {
-                return back()->withErrors(['document' => 'Failed to store the file. Please try again.']);
-            }
-
+            // Store Google Drive link
             $classOffering->update([
-                $columnName => $documentPath,
+                $columnName => $data['google_drive_link'],
             ]);
 
             $documentLabel = $type === 'im' ? 'Instructional Material' : 'Syllabus';
-            return back()->with('status', "{$documentLabel} uploaded successfully!");
+            return back()->with('status', "{$documentLabel} link saved successfully!");
         } catch (\Exception $e) {
-            \Log::error('Document upload failed', [
+            \Log::error('Document link save failed', [
                 'error' => $e->getMessage(),
                 'offering_id' => $classOffering->id,
                 'type' => $type
             ]);
-            return back()->withErrors(['document' => 'Upload failed: ' . $e->getMessage()]);
+            return back()->withErrors(['google_drive_link' => 'Failed to save link: ' . $e->getMessage()]);
         }
     }
 
@@ -312,7 +325,7 @@ class SubjectController extends Controller
             }
         }
 
-        // Allow chair (of the same course), admin, or the assigned faculty to download
+        // Allow chair (of the same course), admin, or the assigned faculty to view
         abort_unless(
             $user->role === 'admin' ||
             ($user->role === 'chair' && $managesCourse) ||
@@ -327,12 +340,20 @@ class SubjectController extends Controller
         // Map type to database column
         $columnName = $type === 'im' ? 'instructional_material' : 'syllabus';
 
-        abort_unless($classOffering->$columnName, 404, 'No document found');
+        abort_unless($classOffering->$columnName, 404, 'No document link found');
 
-        // Use Storage facade to get the correct path
-        $path = \Storage::disk('local')->path($classOffering->$columnName);
-        abort_unless(file_exists($path), 404, 'File not found');
+        // Check if it's a Google Drive link or old file path
+        if (filter_var($classOffering->$columnName, FILTER_VALIDATE_URL)) {
+            // It's a URL (Google Drive link), redirect to it
+            return redirect($classOffering->$columnName);
+        }
 
-        return response()->download($path);
+        // Backward compatibility: if it's an old file path, try to download it
+        if (\Storage::disk('local')->exists($classOffering->$columnName)) {
+            $path = \Storage::disk('local')->path($classOffering->$columnName);
+            return response()->download($path);
+        }
+
+        abort(404, 'Document not found');
     }
 }
