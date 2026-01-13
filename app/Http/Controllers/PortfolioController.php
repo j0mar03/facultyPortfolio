@@ -13,7 +13,7 @@ class PortfolioController extends Controller
 {
     public function index(): View
     {
-        $portfolios = Portfolio::with(['classOffering.subject.course'])
+        $portfolios = Portfolio::with(['classOffering.subject.course', 'items'])
             ->where('user_id', Auth::id())
             ->latest()
             ->get();
@@ -59,15 +59,35 @@ class PortfolioController extends Controller
         // Check if all required items are uploaded
         $requiredTypes = config('portfolio.required_items');
         $uploadedTypes = $portfolio->items()->pluck('type')->unique()->toArray();
+        
+        // Check for Syllabus and Sample IMs from class offering (Google Drive links)
+        $portfolio->load('classOffering');
+        $hasSyllabus = false;
+        $hasIM = false;
+        
+        if ($portfolio->classOffering) {
+            $hasSyllabus = !empty($portfolio->classOffering->syllabus) && filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL);
+            $hasIM = !empty($portfolio->classOffering->instructional_material) && filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL);
+        }
+        
+        // Add Syllabus and Sample IMs to uploaded types if they exist from class offering
+        if ($hasSyllabus && in_array('syllabus', $requiredTypes)) {
+            $uploadedTypes[] = 'syllabus';
+        }
+        if ($hasIM && in_array('sample_ims', $requiredTypes)) {
+            $uploadedTypes[] = 'sample_ims';
+        }
+        
         $missingTypes = array_diff($requiredTypes, $uploadedTypes);
 
         if (!empty($missingTypes)) {
-            $missingLabels = array_map(function ($type) {
-                return config("portfolio.item_types.{$type}", $type);
+            $itemTypes = config('portfolio.item_types');
+            $missingLabels = array_map(function ($type) use ($itemTypes) {
+                return $itemTypes[$type] ?? $type;
             }, $missingTypes);
 
             return back()->withErrors([
-                'submit' => 'Missing required documents: ' . implode(', ', $missingLabels)
+                'submit' => 'Missing required documents: ' . implode(', ', $missingLabels) . '. Please upload all required documents before submitting.'
             ]);
         }
 

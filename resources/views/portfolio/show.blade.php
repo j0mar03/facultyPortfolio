@@ -2,7 +2,10 @@
 	<x-slot name="header">
 		<div class="flex justify-between items-center">
 			<h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-				{{ __('Portfolio') }} — {{ $portfolio->classOffering->subject->code }} ({{ $portfolio->classOffering->academic_year }} / T{{ $portfolio->classOffering->term }}, Sec {{ $portfolio->classOffering->section }})
+				{{ __('Portfolio') }}
+				@if($portfolio->classOffering && $portfolio->classOffering->subject)
+					— {{ $portfolio->classOffering->subject->code }} ({{ $portfolio->classOffering->academic_year }} / T{{ $portfolio->classOffering->term }}, Sec {{ $portfolio->classOffering->section }})
+				@endif
 			</h2>
 			<a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Dashboard</a>
 		</div>
@@ -28,12 +31,72 @@
 						@endif
 					</div>
 					@if(in_array($portfolio->status, ['draft', 'rejected']))
-						<form method="POST" action="{{ route('portfolios.submit', $portfolio) }}" onsubmit="return confirm('Are you sure you want to {{ $portfolio->status === 'rejected' ? 're' : '' }}submit this portfolio? You cannot edit it after submission.');">
-							@csrf
-							<x-button type="submit" class="bg-green-600 hover:bg-green-700">
-								{{ $portfolio->status === 'rejected' ? 'Resubmit for Review' : 'Submit for Review' }}
-							</x-button>
-						</form>
+						@php
+							$requiredTypes = config('portfolio.required_items');
+							$itemTypes = config('portfolio.item_types');
+							$uploadedTypes = $portfolio->items->pluck('type')->unique()->toArray();
+							
+							// Check for Syllabus and Sample IMs from class offering
+							$hasSyllabus = false;
+							$hasIM = false;
+							
+							if ($portfolio->classOffering) {
+								$hasSyllabus = !empty($portfolio->classOffering->syllabus) && filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL);
+								$hasIM = !empty($portfolio->classOffering->instructional_material) && filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL);
+							}
+							
+							if ($hasSyllabus && in_array('syllabus', $requiredTypes)) {
+								$uploadedTypes[] = 'syllabus';
+							}
+							if ($hasIM && in_array('sample_ims', $requiredTypes)) {
+								$uploadedTypes[] = 'sample_ims';
+							}
+							
+							$missingTypes = array_diff($requiredTypes, $uploadedTypes);
+							$isComplete = empty($missingTypes);
+							$uploadedCount = count(array_intersect($requiredTypes, $uploadedTypes));
+							$totalRequired = count($requiredTypes);
+						@endphp
+						
+						<div class="text-right">
+							@if(!$isComplete)
+								<div class="mb-2">
+									<p class="text-sm text-red-600 dark:text-red-400 font-medium">
+										{{ $uploadedCount }}/{{ $totalRequired }} documents uploaded
+									</p>
+									<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+										Missing: {{ implode(', ', array_map(function($type) use ($itemTypes) { return $itemTypes[$type] ?? $type; }, $missingTypes)) }}
+									</p>
+								</div>
+							@else
+								<p class="text-sm text-green-600 dark:text-green-400 font-medium mb-2">
+									All required documents uploaded ✓
+								</p>
+							@endif
+							@php
+								$submitAction = $portfolio->status === 'rejected' ? 're' : '';
+								$confirmMessage = "Are you sure you want to {$submitAction}submit this portfolio? You cannot edit it after submission.";
+								if ($isComplete) {
+									$onsubmitAttr = "return confirm('" . addslashes($confirmMessage) . "');";
+								} else {
+									$onsubmitAttr = "alert('Please upload all required documents before submitting.'); return false;";
+								}
+							@endphp
+							<form method="POST" action="{{ route('portfolios.submit', $portfolio) }}" 
+								  id="submit-form"
+								  onsubmit="{{ $onsubmitAttr }}">
+								@csrf
+								@if($isComplete)
+									<x-button type="submit" class="bg-green-600 hover:bg-green-700">
+										{{ $portfolio->status === 'rejected' ? 'Resubmit for Review' : 'Submit for Review' }}
+									</x-button>
+								@else
+									<x-button type="submit" class="bg-green-600 hover:bg-green-700 opacity-50 cursor-not-allowed" disabled>
+										{{ $portfolio->status === 'rejected' ? 'Resubmit for Review' : 'Submit for Review' }}
+									</x-button>
+								@endif
+							</form>
+						</div>
 					@endif
 				</div>
 
@@ -102,14 +165,16 @@
 							
 							// Get Google Drive link from class offering
 							$googleDriveLink = null;
-							if ($isSyllabus && $portfolio->classOffering->syllabus) {
-								$googleDriveLink = filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL) 
-									? $portfolio->classOffering->syllabus 
-									: null;
-							} elseif ($isSampleIMs && $portfolio->classOffering->instructional_material) {
-								$googleDriveLink = filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL) 
-									? $portfolio->classOffering->instructional_material 
-									: null;
+							if ($portfolio->classOffering) {
+								if ($isSyllabus && !empty($portfolio->classOffering->syllabus)) {
+									$googleDriveLink = filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL) 
+										? $portfolio->classOffering->syllabus 
+										: null;
+								} elseif ($isSampleIMs && !empty($portfolio->classOffering->instructional_material)) {
+									$googleDriveLink = filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL) 
+										? $portfolio->classOffering->instructional_material 
+										: null;
+								}
 							}
 						@endphp
 
