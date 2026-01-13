@@ -20,48 +20,90 @@ class PortfolioItemController extends Controller
         $data = $request->validate([
             'type' => ['required', 'string', 'in:' . implode(',', array_keys(config('portfolio.item_types')))],
             'title' => ['nullable', 'string', 'max:255'],
-            'files' => ['required', 'array'],
-            'files.*' => ['required', 'file', 'max:' . config('portfolio.max_file_size')],
+            'files' => ['nullable', 'array'],
+            'files.*' => ['nullable', 'file', 'max:' . config('portfolio.max_file_size')],
+            'library_document_ids' => ['nullable', 'array'],
+            'library_document_ids.*' => ['nullable', 'exists:faculty_documents,id'],
         ]);
 
         $uploadedCount = 0;
+        $linkedCount = 0;
         $errors = [];
 
-        foreach ($request->file('files') as $file) {
-            $extension = $file->getClientOriginalExtension();
+        // Handle library document selection
+        if ($request->has('library_document_ids') && !empty($request->library_document_ids)) {
+            foreach ($request->library_document_ids as $documentId) {
+                $facultyDocument = \App\Models\FacultyDocument::where('id', $documentId)
+                    ->where('user_id', Auth::id())
+                    ->where('type', $data['type'])
+                    ->first();
 
-            if (!in_array(strtolower($extension), config('portfolio.allowed_extensions'))) {
-                $errors[] = $file->getClientOriginalName() . ' - File type not allowed.';
-                continue;
+                if (!$facultyDocument) {
+                    $errors[] = 'Selected library document not found or invalid.';
+                    continue;
+                }
+
+                PortfolioItem::create([
+                    'portfolio_id' => $portfolio->id,
+                    'faculty_document_id' => $facultyDocument->id,
+                    'type' => $data['type'],
+                    'title' => $facultyDocument->title,
+                    'file_path' => $facultyDocument->file_path, // Keep for backward compatibility
+                    'metadata_json' => $facultyDocument->metadata_json,
+                ]);
+
+                $linkedCount++;
             }
+        }
 
-            $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs(
-                "portfolios/{$portfolio->user_id}/{$portfolio->id}/{$data['type']}",
-                $fileName,
-                'local'
-            );
+        // Handle file uploads
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                if (!$file->isValid()) {
+                    continue;
+                }
 
-            PortfolioItem::create([
-                'portfolio_id' => $portfolio->id,
-                'type' => $data['type'],
-                'title' => $data['title'] ?? $file->getClientOriginalName(),
-                'file_path' => $filePath,
-                'metadata_json' => [
-                    'original_name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType(),
-                ],
-            ]);
+                $extension = $file->getClientOriginalExtension();
 
-            $uploadedCount++;
+                if (!in_array(strtolower($extension), config('portfolio.allowed_extensions'))) {
+                    $errors[] = $file->getClientOriginalName() . ' - File type not allowed.';
+                    continue;
+                }
+
+                $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs(
+                    "portfolios/{$portfolio->user_id}/{$portfolio->id}/{$data['type']}",
+                    $fileName,
+                    'local'
+                );
+
+                PortfolioItem::create([
+                    'portfolio_id' => $portfolio->id,
+                    'type' => $data['type'],
+                    'title' => $data['title'] ?? $file->getClientOriginalName(),
+                    'file_path' => $filePath,
+                    'metadata_json' => [
+                        'original_name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                    ],
+                ]);
+
+                $uploadedCount++;
+            }
         }
 
         if (!empty($errors)) {
-            return back()->withErrors(['files' => $errors])->with('status', "{$uploadedCount} file(s) uploaded successfully.");
+            $message = [];
+            if ($uploadedCount > 0) $message[] = "{$uploadedCount} file(s) uploaded";
+            if ($linkedCount > 0) $message[] = "{$linkedCount} document(s) linked from library";
+            return back()->withErrors(['files' => $errors])->with('status', implode(', ', $message) . '.');
         }
 
-        return back()->with('status', "{$uploadedCount} file(s) uploaded successfully.");
+        $message = [];
+        if ($uploadedCount > 0) $message[] = "{$uploadedCount} file(s) uploaded";
+        if ($linkedCount > 0) $message[] = "{$linkedCount} document(s) linked from library";
+        return back()->with('status', implode(', ', $message) . ' successfully.');
     }
 
     public function download(Portfolio $portfolio, PortfolioItem $item): StreamedResponse
@@ -77,14 +119,17 @@ class PortfolioItemController extends Controller
         abort_unless($canDownload, 403, 'You do not have permission to download this file');
         abort_unless($item->portfolio_id === $portfolio->id, 404);
 
-        if (!Storage::disk('local')->exists($item->file_path)) {
+        // Use actual file path (from library if linked, otherwise from portfolio item)
+        $filePath = $item->actual_file_path;
+
+        if (!Storage::disk('local')->exists($filePath)) {
             abort(404, 'File not found');
         }
 
         $metadata = $item->metadata_json ?? [];
-        $fileName = $metadata['original_name'] ?? basename($item->file_path);
+        $fileName = $metadata['original_name'] ?? basename($filePath);
 
-        return Storage::disk('local')->download($item->file_path, $fileName);
+        return Storage::disk('local')->download($filePath, $fileName);
     }
 
     public function preview(Portfolio $portfolio, PortfolioItem $item)
@@ -100,25 +145,28 @@ class PortfolioItemController extends Controller
         abort_unless($canPreview, 403, 'You do not have permission to preview this file');
         abort_unless($item->portfolio_id === $portfolio->id, 404);
 
-        if (!Storage::disk('local')->exists($item->file_path)) {
+        // Use actual file path (from library if linked, otherwise from portfolio item)
+        $filePath = $item->actual_file_path;
+
+        if (!Storage::disk('local')->exists($filePath)) {
             abort(404, 'File not found');
         }
 
         $metadata = $item->metadata_json ?? [];
-        $fileName = $metadata['original_name'] ?? basename($item->file_path);
-        $mimeType = $metadata['mime_type'] ?? Storage::disk('local')->mimeType($item->file_path);
-        $filePath = Storage::disk('local')->path($item->file_path);
+        $fileName = $metadata['original_name'] ?? basename($filePath);
+        $mimeType = $metadata['mime_type'] ?? Storage::disk('local')->mimeType($filePath);
+        $fullPath = Storage::disk('local')->path($filePath);
 
         // For PDFs and images, serve inline for preview
         if (in_array($mimeType, ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
-            return response()->file($filePath, [
+            return response()->file($fullPath, [
                 'Content-Type' => $mimeType,
                 'Content-Disposition' => 'inline; filename="' . $fileName . '"',
             ]);
         }
 
         // For other file types, still serve inline but browser may download
-        return response()->file($filePath, [
+        return response()->file($fullPath, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);

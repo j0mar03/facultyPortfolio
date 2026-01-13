@@ -47,7 +47,7 @@ class PortfolioController extends Controller
     {
         abort_unless($portfolio->user_id === Auth::id(), 403);
 
-        $portfolio->load(['classOffering.subject.course', 'items']);
+        $portfolio->load(['classOffering.subject.course', 'items.facultyDocument']);
         return view('portfolio.show', compact('portfolio'));
     }
 

@@ -12,6 +12,7 @@ class PortfolioItem extends Model
 
     protected $fillable = [
         'portfolio_id',
+        'faculty_document_id',
         'type',
         'title',
         'file_path',
@@ -25,6 +26,21 @@ class PortfolioItem extends Model
     public function portfolio(): BelongsTo
     {
         return $this->belongsTo(Portfolio::class);
+    }
+
+    public function facultyDocument(): BelongsTo
+    {
+        return $this->belongsTo(FacultyDocument::class);
+    }
+
+    /**
+     * Get the actual file path - either from portfolio item or from linked faculty document
+     */
+    public function getActualFilePathAttribute(): string
+    {
+        return $this->faculty_document_id && $this->facultyDocument
+            ? $this->facultyDocument->file_path
+            : $this->file_path;
     }
 }
 
