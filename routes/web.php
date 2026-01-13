@@ -31,18 +31,6 @@ Route::middleware([
         return view('faculty.class-offerings');
     })->name('faculty.class-offerings');
 
-    // Faculty Document Library
-    Route::prefix('documents')->name('documents.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\FacultyDocumentController::class, 'index'])
-            ->name('index');
-        Route::post('/', [\App\Http\Controllers\FacultyDocumentController::class, 'store'])
-            ->name('store');
-        Route::get('/{facultyDocument}/download', [\App\Http\Controllers\FacultyDocumentController::class, 'download'])
-            ->name('download');
-        Route::delete('/{facultyDocument}', [\App\Http\Controllers\FacultyDocumentController::class, 'destroy'])
-            ->name('destroy');
-    });
-
     Route::resource('portfolios', \App\Http\Controllers\PortfolioController::class)
         ->only(['index', 'store', 'show']);
 
@@ -72,6 +60,18 @@ Route::middleware([
             ->name('show');
         Route::post('/{portfolio}/decision', [\App\Http\Controllers\ReviewController::class, 'decision'])
             ->name('decision');
+    });
+
+    // Document Library (Faculty & Chair)
+    Route::prefix('documents')->name('documents.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FacultyDocumentController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\FacultyDocumentController::class, 'store'])
+            ->name('store');
+        Route::get('/{facultyDocument}/download', [\App\Http\Controllers\FacultyDocumentController::class, 'download'])
+            ->name('download');
+        Route::delete('/{facultyDocument}', [\App\Http\Controllers\FacultyDocumentController::class, 'destroy'])
+            ->name('destroy');
     });
 
     // Chair routes

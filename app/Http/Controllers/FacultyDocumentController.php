@@ -17,7 +17,7 @@ class FacultyDocumentController extends Controller
      */
     public function index(Request $request): View
     {
-        abort_unless(Auth::user()->role === 'faculty', 403);
+        abort_unless(in_array(Auth::user()->role, ['faculty', 'chair']), 403);
 
         $type = $request->get('type');
         $query = FacultyDocument::where('user_id', Auth::id());
@@ -40,7 +40,7 @@ class FacultyDocumentController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()->role === 'faculty', 403);
+        abort_unless(in_array(Auth::user()->role, ['faculty', 'chair']), 403);
 
         $data = $request->validate([
             'type' => ['required', 'string', 'in:sample_quiz,major_exam,tos,activity_rubrics'],
@@ -78,7 +78,7 @@ class FacultyDocumentController extends Controller
     public function destroy(FacultyDocument $facultyDocument): RedirectResponse
     {
         abort_unless($facultyDocument->user_id === Auth::id(), 403);
-        abort_unless(Auth::user()->role === 'faculty', 403);
+        abort_unless(in_array(Auth::user()->role, ['faculty', 'chair']), 403);
 
         // Check if document is being used in any portfolios
         if ($facultyDocument->portfolioItems()->count() > 0) {
@@ -103,7 +103,7 @@ class FacultyDocumentController extends Controller
     public function download(FacultyDocument $facultyDocument): StreamedResponse
     {
         abort_unless($facultyDocument->user_id === Auth::id(), 403);
-        abort_unless(Auth::user()->role === 'faculty', 403);
+        abort_unless(in_array(Auth::user()->role, ['faculty', 'chair']), 403);
 
         if (!Storage::disk('local')->exists($facultyDocument->file_path)) {
             abort(404, 'File not found');

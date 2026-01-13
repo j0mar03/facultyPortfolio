@@ -131,9 +131,9 @@
 						<label for="assignment_document" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 							Teaching Load Document (Optional)
 						</label>
-						<input type="file" name="assignment_document" id="assignment_document" accept=".pdf,.doc,.docx"
+						<input type="file" name="assignment_document" id="assignment_document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
 							   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-						<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload teaching load document (PDF, DOC, DOCX - Max 5MB)</p>
+						<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload teaching load document (PDF, DOC, DOCX, JPG, PNG - Max 5MB)</p>
 						@error('assignment_document')
 							<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
 						@enderror
@@ -206,7 +206,7 @@
 							<form method="POST" action="{{ route('chair.subjects.upload-assignment', $offering) }}" enctype="multipart/form-data" class="flex items-end gap-2">
 								@csrf
 								<div class="flex-1">
-									<input type="file" name="assignment_document" accept=".pdf,.doc,.docx" required
+									<input type="file" name="assignment_document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required
 										   class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
 									<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX - Max 5MB</p>
 								</div>

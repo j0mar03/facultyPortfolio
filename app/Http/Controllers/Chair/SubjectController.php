@@ -137,7 +137,7 @@ class SubjectController extends Controller
             'academic_year' => ['required', 'string'],
             'term' => ['required', 'integer', 'min:1', 'max:3'],
             'section' => ['required', 'string'],
-            'assignment_document' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'], // 5MB max
+            'assignment_document' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'], // 5MB max
         ]);
 
         // Verify faculty or chair role (chairs can also teach)
@@ -240,7 +240,7 @@ class SubjectController extends Controller
         abort_unless($managesCourse, 403, 'You do not manage this course');
 
         $data = $request->validate([
-            'assignment_document' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'], // 5MB max
+            'assignment_document' => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'], // 5MB max
         ]);
 
         // Delete old document if exists
