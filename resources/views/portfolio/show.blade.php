@@ -292,27 +292,27 @@
 												->get() : collect();
 										@endphp
 										
-										@if($isReusable && $libraryDocuments->count() > 0)
-											{{-- Tabs for Upload vs Library --}}
-											<div class="mb-2 border-b border-gray-200 dark:border-gray-700" x-data="{ activeTab: 'upload' }">
-												<nav class="-mb-px flex space-x-4">
-													<button type="button" @click="activeTab = 'upload'" 
-															:class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-															class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-														Upload New
-													</button>
-													<button type="button" @click="activeTab = 'library'" 
-															:class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-															class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-														Select from Library ({{ $libraryDocuments->count() }})
-													</button>
-												</nav>
-											</div>
-										@endif
-
 										<div x-data="{ activeTab: 'upload' }">
+											@if($isReusable && $libraryDocuments->count() > 0)
+												{{-- Tabs for Upload vs Library --}}
+												<div class="mb-2 border-b border-gray-200 dark:border-gray-700">
+													<nav class="-mb-px flex space-x-4">
+														<button type="button" @click="activeTab = 'upload'" 
+																:class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+																class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+															Upload New
+														</button>
+														<button type="button" @click="activeTab = 'library'" 
+																:class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+																class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+															Select from Library ({{ $libraryDocuments->count() }})
+														</button>
+													</nav>
+												</div>
+											@endif
+
 											{{-- Upload Form --}}
-											<div x-show="activeTab === 'upload'" x-cloak class="flex flex-col gap-2">
+											<div x-show="activeTab === 'upload'" class="flex flex-col gap-2">
 												<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex flex-col gap-2">
 													@csrf
 													<input type="hidden" name="type" value="{{ $type }}">
@@ -352,7 +352,7 @@
 
 											{{-- Library Selection Form --}}
 											@if($isReusable && $libraryDocuments->count() > 0)
-												<div x-show="activeTab === 'library'" x-cloak class="flex flex-col gap-2">
+												<div x-show="activeTab === 'library'" class="flex flex-col gap-2">
 													<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" class="flex flex-col gap-2">
 														@csrf
 														<input type="hidden" name="type" value="{{ $type }}">
