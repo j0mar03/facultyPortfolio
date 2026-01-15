@@ -108,13 +108,17 @@ class SubjectController extends Controller
         }
         abort_unless($managesCourse, 403, 'You do not manage this course');
 
-        $subject->load('classOfferings.faculty');
+        // Get default academic year from request or use 2024-2025
+        $defaultAcademicYear = $request->get('academic_year', '2024-2025');
+
+        // Load class offerings filtered by academic year
+        $subject->load(['classOfferings' => function ($query) use ($defaultAcademicYear) {
+            $query->where('academic_year', $defaultAcademicYear)
+                  ->with('faculty', 'portfolio.items');
+        }]);
 
         // Get faculty and chairs who can be assigned (chairs can also teach)
         $availableFaculty = User::whereIn('role', ['faculty', 'chair'])->orderBy('name')->get();
-
-        // Get default academic year from request or use 2024-2025
-        $defaultAcademicYear = $request->get('academic_year', '2024-2025');
 
         return view('chair.subjects.show', compact('subject', 'availableFaculty', 'defaultAcademicYear'));
     }
