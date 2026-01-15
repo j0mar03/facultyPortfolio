@@ -193,41 +193,62 @@ else
     echo -e "${YELLOW}   Check logs: docker logs nextcloud${NC}"
 fi
 
-# Step 10: SSL Certificate Setup
+# Step 10: Cloudflare SSL Configuration
 echo ""
-echo -e "${BLUE}Step 10: SSL Certificate Setup...${NC}"
-
-# Check if Certbot is installed
-if ! command -v certbot &> /dev/null; then
-    echo -e "${YELLOW}📦 Installing Certbot...${NC}"
-    apt update
-    apt install -y certbot python3-certbot-nginx
-fi
+echo -e "${BLUE}Step 10: Cloudflare SSL Configuration...${NC}"
 
 echo ""
-read -p "Do you want to set up SSL certificate with Let's Encrypt now? (yes/no): " SETUP_SSL
+read -p "Is your domain using Cloudflare proxy (orange cloud)? (yes/no): " USE_CLOUDFLARE
 
-if [ "$SETUP_SSL" = "yes" ]; then
+if [ "$USE_CLOUDFLARE" = "yes" ]; then
+    echo -e "${GREEN}✅ Using Cloudflare proxy configuration${NC}"
+    
+    # Use Cloudflare-specific config
+    NGINX_CONFIG_SOURCE="$PROJECT_DIR/scripts/nginx/nextcloud-cloudflare.conf"
+    if [ -f "$NGINX_CONFIG_SOURCE" ]; then
+        sed "s/opcr.itechportfolio.xyz/$DOMAIN/g" "$NGINX_CONFIG_SOURCE" > "$NGINX_CONFIG"
+        echo -e "${GREEN}✅ Updated to Cloudflare proxy configuration${NC}"
+        
+        # Reload Nginx
+        systemctl reload nginx
+    fi
+    
     echo ""
-    read -p "Enter email for Let's Encrypt notifications: " EMAIL
+    echo -e "${YELLOW}📝 Cloudflare SSL Settings:${NC}"
+    echo -e "   Go to Cloudflare Dashboard → SSL/TLS"
+    echo -e "   Set encryption mode to: ${GREEN}Full${NC} or ${GREEN}Full (strict)${NC}"
+    echo -e "   This ensures Cloudflare → Your Server uses HTTPS"
+    echo ""
+    echo -e "${YELLOW}   Note: You don't need Let's Encrypt on your server${NC}"
+    echo -e "${YELLOW}   Cloudflare handles SSL between users and Cloudflare${NC}"
+    echo -e "${YELLOW}   Your server only needs HTTP (port 80)${NC}"
+else
+    echo -e "${YELLOW}📝 Setting up Let's Encrypt SSL...${NC}"
     
-    echo -e "${YELLOW}🔐 Obtaining SSL certificate...${NC}"
+    # Check if Certbot is installed
+    if ! command -v certbot &> /dev/null; then
+        echo -e "${YELLOW}📦 Installing Certbot...${NC}"
+        apt update
+        apt install -y certbot python3-certbot-nginx
+    fi
     
-    # Temporarily comment out SSL lines for initial certbot run
-    sed -i 's/ssl_certificate/#ssl_certificate/g' "$NGINX_CONFIG"
-    sed -i 's/listen 443/listen 80\n    #listen 443/g' "$NGINX_CONFIG"
+    read -p "Do you want to set up SSL certificate with Let's Encrypt now? (yes/no): " SETUP_SSL
     
-    systemctl reload nginx
-    
-    # Get certificate
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$EMAIL" --redirect || {
-        echo -e "${RED}❌ Failed to obtain SSL certificate${NC}"
-        echo -e "${YELLOW}   Make sure DNS is pointing to this server${NC}"
-        echo -e "${YELLOW}   Check firewall allows ports 80 and 443${NC}"
-    }
-    
-    # Restore SSL lines (certbot should have done this, but just in case)
-    systemctl reload nginx
+    if [ "$SETUP_SSL" = "yes" ]; then
+        echo ""
+        read -p "Enter email for Let's Encrypt notifications: " EMAIL
+        
+        echo -e "${YELLOW}🔐 Obtaining SSL certificate...${NC}"
+        
+        # Use the regular config with SSL
+        certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$EMAIL" --redirect || {
+            echo -e "${RED}❌ Failed to obtain SSL certificate${NC}"
+            echo -e "${YELLOW}   Make sure DNS is pointing to this server${NC}"
+            echo -e "${YELLOW}   Check firewall allows ports 80 and 443${NC}"
+        }
+        
+        systemctl reload nginx
+    fi
 fi
 
 # Final summary
