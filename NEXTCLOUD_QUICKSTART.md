@@ -10,30 +10,23 @@ sudo bash scripts/setup-services-structure.sh
 
 This creates organized folders in `/opt/services/` to keep everything separate.
 
-### 2. Configure MySQL for Docker Access
+### 2. Set Up Docker MySQL Databases
 
-**⚠️ SAFE VERSION - Won't break your existing setup:**
+**✅ Since Faculty Portfolio uses Docker MySQL, we'll use that!**
 
 ```bash
-sudo bash scripts/configure-mysql-for-docker-safe.sh
+sudo bash scripts/setup-docker-mysql.sh
 ```
 
-This safe version:
-- ✅ Creates a backup before making changes
-- ✅ Tests your Faculty Portfolio connection
-- ✅ Shows you exactly what will change
-- ✅ Can be rolled back if needed
-- ✅ Verifies everything still works after changes
+This script:
+- ✅ Uses your existing Faculty Portfolio MySQL container
+- ✅ Creates databases for Nextcloud and Snipe-IT
+- ✅ No host MySQL configuration needed!
+- ✅ Safe - doesn't touch your VPS MySQL
 
-**Or if you prefer the original script:**
+**Note:** Make sure Faculty Portfolio is running first:
 ```bash
-sudo bash scripts/configure-mysql-for-docker.sh
-```
-
-### 3. Create Databases and Users
-
-```bash
-sudo bash scripts/setup-nextcloud-db.sh
+cd ~/facultyPortfolio && docker compose up -d
 ```
 
 You'll be prompted for:
