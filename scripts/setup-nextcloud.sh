@@ -47,12 +47,35 @@ else
     exit 1
 fi
 
-# Check if MySQL setup script has been run
-echo -e "${YELLOW}📋 Checking MySQL setup...${NC}"
-if ! mysql -u root -e "USE nextcloud;" 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  Nextcloud database not found. Running database setup...${NC}"
-    bash "$SCRIPT_DIR/setup-nextcloud-db.sh"
+# Check if MySQL setup script has been run (Docker MySQL)
+echo -e "${YELLOW}📋 Checking Docker MySQL setup...${NC}"
+
+# Check if Faculty Portfolio MySQL container is running
+if ! docker ps | grep -q "facultyportfolio-db"; then
+    echo -e "${RED}❌ Faculty Portfolio MySQL container is not running!${NC}"
+    echo -e "${YELLOW}   Please start Faculty Portfolio first:${NC}"
+    echo -e "${YELLOW}   cd ~/facultyPortfolio && docker compose up -d${NC}"
+    exit 1
 fi
+
+# Check if databases exist in Docker MySQL
+MYSQL_CONTAINER="facultyportfolio-db"
+DB_EXISTS=$(docker exec "$MYSQL_CONTAINER" mysql -uroot -proot -e "SHOW DATABASES LIKE 'nextcloud';" 2>/dev/null | grep -q "nextcloud" && echo "yes" || echo "no")
+
+if [ "$DB_EXISTS" != "yes" ]; then
+    echo -e "${YELLOW}⚠️  Nextcloud database not found. Running Docker MySQL setup...${NC}"
+    bash "$SCRIPT_DIR/setup-docker-mysql.sh"
+    
+    # Verify database was created
+    sleep 2
+    DB_EXISTS=$(docker exec "$MYSQL_CONTAINER" mysql -uroot -proot -e "SHOW DATABASES LIKE 'nextcloud';" 2>/dev/null | grep -q "nextcloud" && echo "yes" || echo "no")
+    if [ "$DB_EXISTS" != "yes" ]; then
+        echo -e "${RED}❌ Failed to create Nextcloud database. Please run setup-docker-mysql.sh manually.${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}✅ Nextcloud database exists${NC}"
 
 # Prompt for configuration
 echo ""
@@ -72,8 +95,9 @@ NEXTCLOUD_PROTOCOL=${NEXTCLOUD_PROTOCOL:-https}
 read -sp "Nextcloud database password: " NEXTCLOUD_DB_PASSWORD
 echo ""
 
-read -sp "MySQL root password: " MYSQL_ROOT_PASSWORD
-echo ""
+# Docker MySQL root password is 'root' by default
+MYSQL_ROOT_PASSWORD="root"
+echo -e "${YELLOW}   Using Docker MySQL root password: root${NC}"
 
 read -sp "Redis password [optional, press Enter to skip]: " REDIS_PASSWORD
 echo ""
@@ -97,19 +121,23 @@ echo -e "${GREEN}✅ Created .env file${NC}"
 # Load environment variables
 export $(cat "$NEXTCLOUD_DIR/.env" | grep -v '^#' | xargs)
 
-# Check MySQL bind-address configuration
-echo -e "${YELLOW}🔍 Checking MySQL configuration...${NC}"
-MYSQL_BIND=$(grep -E "^bind-address" /etc/mysql/mysql.conf.d/mysqld.cnf 2>/dev/null || echo "bind-address = 127.0.0.1")
-if echo "$MYSQL_BIND" | grep -q "127.0.0.1"; then
-    echo -e "${YELLOW}⚠️  MySQL is currently bound to 127.0.0.1. Docker containers need access.${NC}"
-    read -p "Configure MySQL for Docker access now? (y/n): " CONFIGURE_MYSQL
-    if [ "$CONFIGURE_MYSQL" = "y" ]; then
-        bash "$SCRIPT_DIR/configure-mysql-for-docker.sh"
-    else
-        echo -e "${YELLOW}   Please run: sudo bash $SCRIPT_DIR/configure-mysql-for-docker.sh${NC}"
-        read -p "Press Enter to continue after configuring MySQL..."
-    fi
+# Check Docker network configuration
+echo -e "${YELLOW}🔍 Checking Docker network configuration...${NC}"
+
+# Detect the actual Docker network name
+MYSQL_CONTAINER="facultyportfolio-db"
+MYSQL_NETWORK=$(docker inspect "$MYSQL_CONTAINER" --format '{{range $key, $value := .NetworkSettings.Networks}}{{$key}}{{end}}' | head -1)
+
+if [ -z "$MYSQL_NETWORK" ]; then
+    echo -e "${RED}❌ Could not detect Docker network${NC}"
+    exit 1
 fi
+
+echo -e "${GREEN}✅ Detected MySQL network: $MYSQL_NETWORK${NC}"
+
+# Fix network configuration in docker-compose files
+echo -e "${YELLOW}🔧 Updating docker-compose.yml network configuration...${NC}"
+bash "$SCRIPT_DIR/fix-docker-networks.sh"
 
 # Start Nextcloud containers
 echo -e "${YELLOW}🐳 Starting Nextcloud containers...${NC}"
@@ -128,7 +156,7 @@ if docker ps | grep -q nextcloud; then
     echo -e "  - Directory: $NEXTCLOUD_DIR"
     echo -e "  - URL: ${NEXTCLOUD_PROTOCOL}://${NEXTCLOUD_HOST}"
     echo -e "  - Admin User: ${NEXTCLOUD_ADMIN_USER}"
-    echo -e "  - Database: nextcloud (on host MySQL)"
+    echo -e "  - Database: nextcloud (on Docker MySQL: facultyportfolio-db)"
     echo ""
     echo -e "${YELLOW}📝 Next Steps:${NC}"
     echo -e "  1. Configure Nginx reverse proxy (see scripts/nginx/nextcloud.conf)"
