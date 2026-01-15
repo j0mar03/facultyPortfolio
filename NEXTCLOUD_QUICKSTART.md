@@ -2,16 +2,24 @@
 
 ## Quick Setup (5 minutes)
 
-### 1. Configure MySQL for Docker Access
+### 1. Create Services Directory Structure
+
+```bash
+sudo bash scripts/setup-services-structure.sh
+```
+
+This creates organized folders in `/opt/services/` to keep everything separate.
+
+### 2. Configure MySQL for Docker Access
 
 ```bash
 sudo bash scripts/configure-mysql-for-docker.sh
 ```
 
-### 2. Create Databases and Users
+### 3. Create Databases and Users
 
 ```bash
-bash scripts/setup-nextcloud-db.sh
+sudo bash scripts/setup-nextcloud-db.sh
 ```
 
 You'll be prompted for:
@@ -19,28 +27,41 @@ You'll be prompted for:
 - Nextcloud database user password
 - Snipe-IT database user password (for future use)
 
-### 3. Set Up Nextcloud
+### 4. Set Up Nextcloud
 
 ```bash
-bash scripts/setup-nextcloud.sh
+sudo bash scripts/setup-nextcloud.sh
 ```
 
 You'll be prompted for:
 - Nextcloud admin username (default: admin)
 - Nextcloud admin password
-- Nextcloud domain/host
+- Nextcloud subdomain (default: opcr.itechportfolio.xyz)
 - Database passwords
 
-### 4. Access Nextcloud
+Nextcloud will be set up in `/opt/services/nextcloud/` - completely separate from your other projects!
+
+### 5. Configure Nginx Reverse Proxy
+
+```bash
+sudo bash scripts/setup-nginx-proxies.sh
+```
+
+This sets up:
+- Nginx configuration for opcr.itechportfolio.xyz
+- SSL certificates with Let's Encrypt
+- HTTPS access
+
+### 6. Access Nextcloud
 
 Open your browser and go to:
 ```
-http://your-vps-ip:8082
+https://opcr.itechportfolio.xyz
 ```
 
 Log in with the admin credentials you set during setup.
 
-### 5. Enable Calendar App
+### 7. Enable Calendar App
 
 1. Click your profile icon (top right)
 2. Go to "Apps"
