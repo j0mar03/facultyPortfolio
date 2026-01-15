@@ -12,6 +12,20 @@ This creates organized folders in `/opt/services/` to keep everything separate.
 
 ### 2. Configure MySQL for Docker Access
 
+**⚠️ SAFE VERSION - Won't break your existing setup:**
+
+```bash
+sudo bash scripts/configure-mysql-for-docker-safe.sh
+```
+
+This safe version:
+- ✅ Creates a backup before making changes
+- ✅ Tests your Faculty Portfolio connection
+- ✅ Shows you exactly what will change
+- ✅ Can be rolled back if needed
+- ✅ Verifies everything still works after changes
+
+**Or if you prefer the original script:**
 ```bash
 sudo bash scripts/configure-mysql-for-docker.sh
 ```
