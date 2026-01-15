@@ -64,6 +64,38 @@
 							@enderror
 						</div>
 
+						{{-- Managed courses (only for Program Chair) --}}
+						<div x-data="{ role: '{{ old('role') }}' }">
+							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								Managed Courses (for Program Chair)
+							</label>
+							<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								Select the courses this chair will manage. Example mappings:
+								<span class="font-semibold">DCPET Chair</span> → DCPET, DECET;
+								<span class="font-semibold">DIT Chair</span> → DIT, DOMT;
+								<span class="font-semibold">ME/EE Chair</span> → DMET, DEET.
+							</p>
+							<div class="mt-2"
+								 x-show="role === 'chair'"
+								 x-cloak>
+								<div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+									@foreach($courses as $course)
+										<label class="inline-flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+											<input type="checkbox"
+												   name="managed_course_ids[]"
+												   value="{{ $course->id }}"
+												   {{ in_array($course->id, old('managed_course_ids', [])) ? 'checked' : '' }}
+												   class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+											<span>{{ $course->code }} - {{ $course->name }}</span>
+										</label>
+									@endforeach
+								</div>
+								@error('managed_course_ids')
+									<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+								@enderror
+							</div>
+						</div>
+
 						<div class="flex gap-4">
 							<x-button type="submit">
 								Create User
