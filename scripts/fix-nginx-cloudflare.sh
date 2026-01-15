@@ -110,13 +110,31 @@ else
 fi
 
 echo ""
-echo -e "${BLUE}Step 4: Reloading Nginx...${NC}"
+echo -e "${BLUE}Step 4: Starting/Reloading Nginx...${NC}"
 
-if systemctl reload nginx; then
-    echo -e "${GREEN}✅ Nginx reloaded successfully${NC}"
+# Check if Nginx is running
+if systemctl is-active --quiet nginx; then
+    echo -e "${YELLOW}   Nginx is running, reloading...${NC}"
+    if systemctl reload nginx; then
+        echo -e "${GREEN}✅ Nginx reloaded successfully${NC}"
+    else
+        echo -e "${RED}❌ Failed to reload Nginx${NC}"
+        exit 1
+    fi
 else
-    echo -e "${RED}❌ Failed to reload Nginx${NC}"
-    exit 1
+    echo -e "${YELLOW}   Nginx is not running, starting...${NC}"
+    if systemctl start nginx; then
+        echo -e "${GREEN}✅ Nginx started successfully${NC}"
+        
+        # Enable to start on boot
+        systemctl enable nginx
+        echo -e "${GREEN}✅ Nginx enabled to start on boot${NC}"
+    else
+        echo -e "${RED}❌ Failed to start Nginx${NC}"
+        echo -e "${YELLOW}   Checking status...${NC}"
+        systemctl status nginx
+        exit 1
+    fi
 fi
 
 echo ""
