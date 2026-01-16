@@ -12,19 +12,19 @@ services:
       - MYSQL_HOST=facultyportfolio-db
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud_user
-      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-change_me_secure_password}
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-NextcloudDB2024!Secure}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
-      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-change_me_admin_password}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-localhost}
-      - OVERWRITEHOST=${NEXTCLOUD_HOST:-localhost}
-      - OVERWRITEPROTOCOL=${NEXTCLOUD_PROTOCOL:-http}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-Admin@Nextcloud2024!}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-opcr.itechportfolio.xyz localhost}
+      - OVERWRITEHOST=${NEXTCLOUD_HOST:-opcr.itechportfolio.xyz}
+      - OVERWRITEPROTOCOL=${NEXTCLOUD_PROTOCOL:-https}
       - OVERWRITEWEBROOT=/
-      - OVERWRITECLIURL=${NEXTCLOUD_PROTOCOL:-http}://${NEXTCLOUD_HOST:-localhost}
+      - OVERWRITECLIURL=${NEXTCLOUD_PROTOCOL:-https}://${NEXTCLOUD_HOST:-opcr.itechportfolio.xyz}
       - APACHE_DISABLE_REWRITE_IP=1
       - REDIS_HOST=redis
       - REDIS_HOST_PORT=6379
-      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD:-Redis2024!Secure}
     networks:
       - nextcloud-network
       - facultyportfolio_default
@@ -35,7 +35,7 @@ services:
     image: redis:7-alpine
     container_name: nextcloud-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-change_me_redis_password}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-Redis2024!Secure}
     volumes:
       - redis-data:/data
     networks:
