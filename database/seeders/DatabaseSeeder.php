@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             DemoSubjectSeeder::class,
             UserSeeder::class,
             ClassOfferingSeeder::class,
+            DEETDMET2025_2026Seeder::class,
         ]);
 
         $this->command->info('All seeders completed successfully!');
