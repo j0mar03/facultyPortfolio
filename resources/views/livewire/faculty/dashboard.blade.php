@@ -19,18 +19,40 @@
 				@forelse ($offerings as $offering)
 					<tr>
 						<td class="px-4 py-2 whitespace-nowrap">{{ $offering->subject->course->code }}</td>
-						<td class="px-4 py-2 whitespace-nowrap">
+						<td class="px-4 py-2">
 							<div class="font-medium">{{ $offering->subject->code }}</div>
 							<div class="text-sm text-gray-500 dark:text-gray-400">{{ $offering->subject->title }}</div>
-						@if($offering->assignment_document)
-							<a href="{{ route('chair.subjects.download-assignment', $offering) }}"
-							   class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1">
-								<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-								</svg>
-								Teaching Load
-							</a>
-						@endif
+							<div class="flex flex-wrap gap-2 mt-1">
+								@if($offering->assignment_document)
+									<a href="{{ route('chair.subjects.download-assignment', $offering) }}"
+									   class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+										</svg>
+										Teaching Load
+									</a>
+								@endif
+								@if($offering->instructional_material)
+									<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'im']) }}"
+									   target="_blank"
+									   class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:underline">
+										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+										</svg>
+										IM
+									</a>
+								@endif
+								@if($offering->syllabus)
+									<a href="{{ route('chair.subjects.download-document', ['classOffering' => $offering, 'type' => 'syllabus']) }}"
+									   target="_blank"
+									   class="inline-flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:underline">
+										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+										</svg>
+										Syllabus
+									</a>
+								@endif
+							</div>
 						</td>
 						<td class="px-4 py-2 whitespace-nowrap">{{ $offering->academic_year }} / T{{ $offering->term }}</td>
 						<td class="px-4 py-2 whitespace-nowrap">{{ $offering->section }}</td>
