@@ -16,10 +16,28 @@ class ReviewController extends Controller
         // Only chairs and admins can access review queue
         abort_unless(in_array(Auth::user()->role, ['chair', 'admin']), 403);
 
-        $portfolios = Portfolio::with(['user', 'classOffering.subject.course', 'reviews.reviewer'])
-            ->where('status', 'submitted')
-            ->orderBy('submitted_at', 'asc')
-            ->paginate(20);
+        $user = Auth::user();
+        
+        // Build query for portfolios
+        $query = Portfolio::with(['user', 'classOffering.subject.course', 'reviews.reviewer'])
+            ->where('status', 'submitted');
+
+        // If user is a chair (not admin), filter by their managed courses
+        if ($user->role === 'chair') {
+            $managedCourseIds = $user->managedCourses->pluck('id');
+            
+            // Backward compatibility: if no managed courses, use old course_id
+            if ($managedCourseIds->isEmpty() && $user->course_id) {
+                $managedCourseIds = collect([$user->course_id]);
+            }
+            
+            // Filter portfolios to only show those from managed courses
+            $query->whereHas('classOffering.subject', function ($q) use ($managedCourseIds) {
+                $q->whereIn('course_id', $managedCourseIds);
+            });
+        }
+        
+        $portfolios = $query->orderBy('submitted_at', 'asc')->paginate(20);
 
         return view('chair.review-queue', compact('portfolios'));
     }
@@ -28,6 +46,27 @@ class ReviewController extends Controller
     {
         // Only chairs and admins can review
         abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
+
+        $user = Auth::user();
+        
+        // If user is a chair (not admin/auditor), verify they manage this portfolio's course
+        if ($user->role === 'chair') {
+            $managedCourseIds = $user->managedCourses->pluck('id');
+            
+            // Backward compatibility
+            if ($managedCourseIds->isEmpty() && $user->course_id) {
+                $managedCourseIds = collect([$user->course_id]);
+            }
+            
+            $portfolio->load('classOffering.subject');
+            $portfolioCourseId = $portfolio->classOffering->subject->course_id;
+            
+            abort_unless(
+                $managedCourseIds->contains($portfolioCourseId),
+                403,
+                'You do not have permission to review this portfolio.'
+            );
+        }
 
         $portfolio->load([
             'user',
@@ -44,6 +83,27 @@ class ReviewController extends Controller
         // Only chairs can make decisions
         abort_unless(in_array(Auth::user()->role, ['chair', 'admin']), 403);
         abort_if($portfolio->status !== 'submitted', 403, 'Portfolio is not pending review');
+
+        $user = Auth::user();
+        
+        // If user is a chair (not admin), verify they manage this portfolio's course
+        if ($user->role === 'chair') {
+            $managedCourseIds = $user->managedCourses->pluck('id');
+            
+            // Backward compatibility
+            if ($managedCourseIds->isEmpty() && $user->course_id) {
+                $managedCourseIds = collect([$user->course_id]);
+            }
+            
+            $portfolio->load('classOffering.subject');
+            $portfolioCourseId = $portfolio->classOffering->subject->course_id;
+            
+            abort_unless(
+                $managedCourseIds->contains($portfolioCourseId),
+                403,
+                'You do not have permission to make decisions on this portfolio.'
+            );
+        }
 
         $data = $request->validate([
             'decision' => ['required', 'in:approved,rejected,changes_requested'],
