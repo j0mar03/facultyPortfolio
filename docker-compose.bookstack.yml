@@ -16,6 +16,12 @@ services:
       - DB_DATABASE=bookstack
       - DB_USER=bookstack_user
       - DB_PASS=${BOOKSTACK_DB_PASSWORD:-BookstackDB2024!Secure}
+      # Alternative variable names (LinuxServer.io uses these)
+      - MYSQL_HOST=facultyportfolio-db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=bookstack
+      - MYSQL_USER=bookstack_user
+      - MYSQL_PASSWORD=${BOOKSTACK_DB_PASSWORD:-BookstackDB2024!Secure}
       - MAIL_DRIVER=${MAIL_DRIVER:-smtp}
       - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
       - MAIL_PORT=${MAIL_PORT:-587}
