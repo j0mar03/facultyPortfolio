@@ -5,11 +5,14 @@ Get BookStack running in 5 minutes! 🚀
 ## Prerequisites
 
 - ✅ Main Faculty Portfolio running (`docker-compose up -d`)
-- ✅ DNS records configured:
-  - `portfolio.itechportfolio.xyz` → Your server IP
-  - `site.itechportfolio.xyz` → Your server IP
+- ✅ DNS records configured in Cloudflare:
+  - `portfolio.itechportfolio.xyz` → Your server IP (Proxied ✅)
+  - `site.itechportfolio.xyz` → Your server IP (Proxied ✅)
+- ✅ Cloudflare SSL mode set to **Flexible**
 - ✅ Nginx installed on host
 - ✅ Port 8084 available
+
+**Note**: This setup uses Cloudflare Flexible mode (Cloudflare handles HTTPS). No SSL certificates needed on the server!
 
 ## One-Command Setup
 
@@ -18,10 +21,11 @@ sudo ./scripts/setup-bookstack.sh
 ```
 
 That's it! The script will:
-1. Configure nginx for both portfolio and BookStack
-2. Obtain SSL certificates
-3. Create database and user
-4. Start BookStack
+1. Configure nginx for both portfolio and BookStack (HTTP only - Cloudflare handles HTTPS)
+2. Create database and user
+3. Start BookStack
+
+**Note**: No SSL certificates needed - Cloudflare handles HTTPS!
 
 ## Access
 
@@ -55,12 +59,11 @@ sudo ln -s /etc/nginx/sites-available/bookstack /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 3. Get SSL Certificates
+### 3. Verify Cloudflare Configuration
 
-```bash
-sudo certbot --nginx -d portfolio.itechportfolio.xyz
-sudo certbot --nginx -d site.itechportfolio.xyz
-```
+- Ensure domains are proxied (orange cloud) in Cloudflare
+- SSL/TLS mode should be "Flexible"
+- No SSL certificates needed on server
 
 ### 4. Start BookStack
 
@@ -105,9 +108,12 @@ docker-compose up -d db
 
 ### SSL issues?
 ```bash
-# Verify DNS first
+# Verify DNS first (should show Cloudflare IPs)
 nslookup site.itechportfolio.xyz
 nslookup portfolio.itechportfolio.xyz
+
+# Check Cloudflare SSL mode is "Flexible"
+# Cloudflare Dashboard → SSL/TLS → Overview
 ```
 
 ### Can't connect?
@@ -128,6 +134,7 @@ sudo tail -f /var/log/nginx/error.log
 ## Documentation
 
 - **Full Guide**: [BOOKSTACK_SETUP.md](BOOKSTACK_SETUP.md)
+- **Cloudflare Setup**: [CLOUDFLARE_BOOKSTACK.md](CLOUDFLARE_BOOKSTACK.md)
 - **All Services**: [SERVICES_OVERVIEW.md](SERVICES_OVERVIEW.md)
 - **Official Docs**: https://www.bookstackapp.com/docs/
 

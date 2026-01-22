@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # BookStack Setup Script
-# This script sets up BookStack with nginx reverse proxy and SSL certificates
+# This script sets up BookStack with nginx reverse proxy
+# Configured for Cloudflare Flexible mode (Cloudflare handles HTTPS)
 
 set -e
 
@@ -99,31 +100,10 @@ systemctl reload nginx
 echo -e "${GREEN}Nginx reloaded${NC}"
 echo ""
 
-# Setup SSL certificates
-echo -e "${YELLOW}Setting up SSL certificates...${NC}"
-echo ""
-
-# SSL for BookStack
-if [ ! -d "/etc/letsencrypt/live/site.itechportfolio.xyz" ]; then
-    echo -e "${YELLOW}Obtaining SSL certificate for site.itechportfolio.xyz...${NC}"
-    certbot --nginx -d site.itechportfolio.xyz --non-interactive --agree-tos --email admin@itechportfolio.xyz || {
-        echo -e "${RED}Failed to obtain SSL certificate for site.itechportfolio.xyz${NC}"
-        echo "You can manually run: certbot --nginx -d site.itechportfolio.xyz"
-    }
-else
-    echo -e "${GREEN}SSL certificate for site.itechportfolio.xyz already exists${NC}"
-fi
-
-# SSL for Portfolio
-if [ ! -d "/etc/letsencrypt/live/portfolio.itechportfolio.xyz" ]; then
-    echo -e "${YELLOW}Obtaining SSL certificate for portfolio.itechportfolio.xyz...${NC}"
-    certbot --nginx -d portfolio.itechportfolio.xyz --non-interactive --agree-tos --email admin@itechportfolio.xyz || {
-        echo -e "${RED}Failed to obtain SSL certificate for portfolio.itechportfolio.xyz${NC}"
-        echo "You can manually run: certbot --nginx -d portfolio.itechportfolio.xyz"
-    }
-else
-    echo -e "${GREEN}SSL certificate for portfolio.itechportfolio.xyz already exists${NC}"
-fi
+# Note about Cloudflare SSL
+echo -e "${YELLOW}Note: SSL/HTTPS is handled by Cloudflare${NC}"
+echo -e "${GREEN}No SSL certificates needed on the server (Cloudflare Flexible mode)${NC}"
+echo -e "${YELLOW}Make sure your domains are proxied through Cloudflare (orange cloud)${NC}"
 echo ""
 
 # Start BookStack
@@ -145,6 +125,11 @@ echo ""
 echo "Services:"
 echo "  - Portfolio:  https://portfolio.itechportfolio.xyz"
 echo "  - BookStack:  https://site.itechportfolio.xyz"
+echo ""
+echo -e "${YELLOW}Cloudflare Configuration:${NC}"
+echo "  - Make sure domains are proxied (orange cloud) in Cloudflare"
+echo "  - SSL/TLS mode: Flexible (Cloudflare handles HTTPS)"
+echo "  - Server only needs HTTP (port 80)"
 echo ""
 echo "BookStack Default Credentials:"
 echo "  Email:    admin@admin.com"
