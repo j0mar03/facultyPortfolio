@@ -1,6 +1,6 @@
 # Services Setup Guide - Organized Structure
 
-This guide helps you set up Nextcloud and Snipe-IT on your VPS with a clean, organized folder structure and subdomain access.
+This guide helps you set up BookStack, Nextcloud, and Snipe-IT on your VPS with a clean, organized folder structure and subdomain access.
 
 ## 📁 Directory Structure
 
@@ -14,6 +14,9 @@ All services are organized in `/opt/services/` to keep everything clean and sepa
 ├── snipeit/            # Snipe-IT files and configuration
 │   ├── docker-compose.yml
 │   └── .env
+├── bookstack/          # BookStack documentation
+│   ├── docker-compose.yml
+│   └── .env
 └── nginx-configs/      # Nginx configuration templates
 
 # Faculty Portfolio stays in its current location
@@ -22,9 +25,10 @@ All services are organized in `/opt/services/` to keep everything clean and sepa
 
 ## 🌐 Subdomain Configuration
 
-- **Nextcloud**: `opcr.itechportfolio.xyz`
-- **Snipe-IT**: `asset.itechportfolio.xyz`
-- **Faculty Portfolio**: `portfolio.itechportfolio.xyz` (existing)
+- **Faculty Portfolio**: `portfolio.itechportfolio.xyz` (main application)
+- **BookStack**: `site.itechportfolio.xyz` (documentation)
+- **Nextcloud**: `opcr.itechportfolio.xyz` (file storage)
+- **Snipe-IT**: `asset.itechportfolio.xyz` (asset management)
 
 ## 🚀 Complete Setup Process
 
@@ -80,7 +84,22 @@ This will:
 - Start Snipe-IT container
 - Configure for `asset.itechportfolio.xyz`
 
-### Step 6: Configure Nginx Reverse Proxies
+### Step 6: Set Up BookStack
+
+```bash
+sudo bash scripts/setup-bookstack.sh
+```
+
+This will:
+- Configure nginx reverse proxy for both BookStack and Portfolio
+- Set up SSL certificates for both domains
+- Create BookStack database and user automatically
+- Start BookStack container
+- Configure for `site.itechportfolio.xyz` and `portfolio.itechportfolio.xyz`
+
+**Note**: BookStack uses a different setup approach and stays in your project directory rather than `/opt/services/`. See [BOOKSTACK_SETUP.md](BOOKSTACK_SETUP.md) for more details.
+
+### Step 7: Configure Nginx Reverse Proxies
 
 ```bash
 sudo bash scripts/setup-nginx-proxies.sh
@@ -91,16 +110,56 @@ This will:
 - Enable sites
 - Optionally set up SSL certificates with Let's Encrypt
 
-### Step 7: Configure DNS
+### Step 8: Configure DNS
 
 Add these DNS A records pointing to your VPS IP:
 
 ```
-opcr.itechportfolio.xyz    -> Your VPS IP
-asset.itechportfolio.xyz   -> Your VPS IP
+portfolio.itechportfolio.xyz -> Your VPS IP
+site.itechportfolio.xyz      -> Your VPS IP
+opcr.itechportfolio.xyz      -> Your VPS IP
+asset.itechportfolio.xyz     -> Your VPS IP
 ```
 
 ## 📋 Service Management
+
+### Faculty Portfolio
+
+```bash
+# Navigate to project directory
+cd /home/jomar/dev/projects/facultyPortfolio
+
+# Start
+docker-compose up -d
+
+# Stop
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Restart
+docker-compose restart
+```
+
+### BookStack
+
+```bash
+# Navigate to project directory
+cd /home/jomar/dev/projects/facultyPortfolio
+
+# Start
+docker-compose -f docker-compose.bookstack.yml up -d
+
+# Stop
+docker-compose -f docker-compose.bookstack.yml down
+
+# View logs
+docker-compose -f docker-compose.bookstack.yml logs -f
+
+# Restart
+docker-compose -f docker-compose.bookstack.yml restart
+```
 
 ### Nextcloud
 

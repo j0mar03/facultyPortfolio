@@ -1,0 +1,67 @@
+services:
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    container_name: bookstack
+    restart: unless-stopped
+    ports:
+      - "8084:80"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - APP_URL=${BOOKSTACK_URL:-https://site.itechportfolio.xyz}
+      - DB_HOST=facultyportfolio-db
+      - DB_PORT=3306
+      - DB_DATABASE=bookstack
+      - DB_USER=bookstack_user
+      - DB_PASS=${BOOKSTACK_DB_PASSWORD:-BookstackDB2024!Secure}
+      - MAIL_DRIVER=${MAIL_DRIVER:-smtp}
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_FROM=${MAIL_FROM:-noreply@itechportfolio.xyz}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-BookStack}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+    volumes:
+      - bookstack-config:/config
+    networks:
+      - bookstack-network
+      - facultyportfolio_default
+    depends_on:
+      - bookstack-db-setup
+
+  # Service to create the database and user for BookStack
+  bookstack-db-setup:
+    image: mysql:8.0
+    container_name: bookstack-db-setup
+    restart: "no"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - facultyportfolio_default
+    entrypoint: >
+      /bin/sh -c "
+      until mysql -h facultyportfolio-db -u root -proot -e 'SELECT 1' >/dev/null 2>&1; do
+        echo 'Waiting for MySQL to be ready...';
+        sleep 3;
+      done;
+      echo 'MySQL is ready, creating database and user...';
+      mysql -h facultyportfolio-db -u root -proot <<EOF
+      CREATE DATABASE IF NOT EXISTS bookstack CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+      CREATE USER IF NOT EXISTS 'bookstack_user'@'%' IDENTIFIED BY '${BOOKSTACK_DB_PASSWORD:-BookstackDB2024!Secure}';
+      GRANT ALL PRIVILEGES ON bookstack.* TO 'bookstack_user'@'%';
+      FLUSH PRIVILEGES;
+      EOF
+      echo 'Database setup complete!';
+      "
+
+volumes:
+  bookstack-config:
+    driver: local
+
+networks:
+  bookstack-network:
+    driver: bridge
+  facultyportfolio_default:
+    external: true

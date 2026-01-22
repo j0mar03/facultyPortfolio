@@ -256,7 +256,7 @@
 															</span>
 														@endif
 														<span class="text-xs text-gray-500 dark:text-gray-400">
-															({{ number_format(($item->metadata_json['size'] ?? 0) / 1024, 2) }} KB)
+															({{ number_format((($item->metadata_json ?? [])['size'] ?? 0) / 1024, 2) }} KB)
 														</span>
 													</div>
 													<div class="flex items-center gap-2">
@@ -285,7 +285,8 @@
 								@if(in_array($portfolio->status, ['draft', 'rejected']) && !$isFromClassOffering)
 									<div class="ml-4">
 										@php
-											$isReusable = in_array($type, $reusableTypes);
+											$reusableTypesList = ['sample_quiz', 'major_exam', 'tos', 'activity_rubrics'];
+											$isReusable = in_array($type, $reusableTypesList);
 											$libraryDocuments = $isReusable ? \App\Models\FacultyDocument::where('user_id', Auth::id())
 												->where('type', $type)
 												->orderBy('created_at', 'desc')
@@ -293,26 +294,97 @@
 										@endphp
 										
 										@if($isReusable && $libraryDocuments->count() > 0)
-											{{-- Tabs for Upload vs Library --}}
-											<div class="mb-2 border-b border-gray-200 dark:border-gray-700" x-data="{ activeTab: 'upload' }">
-												<nav class="-mb-px flex space-x-4">
-													<button type="button" @click="activeTab = 'upload'" 
-															:class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-															class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-														Upload New
-													</button>
-													<button type="button" @click="activeTab = 'library'" 
-															:class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-															class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-														Select from Library ({{ $libraryDocuments->count() }})
-													</button>
-												</nav>
-											</div>
-										@endif
+											<div x-data="{ activeTab: 'upload' }">
+												{{-- Tabs for Upload vs Library --}}
+												<div class="mb-2 border-b border-gray-200 dark:border-gray-700">
+													<nav class="-mb-px flex space-x-4">
+														<button type="button" @click="activeTab = 'upload'" 
+																:class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+																class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+															Upload New
+														</button>
+														<button type="button" @click="activeTab = 'library'" 
+																:class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+																class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+															Select from Library ({{ $libraryDocuments->count() }})
+														</button>
+													</nav>
+												</div>
 
-										<div x-data="{ activeTab: 'upload' }">
-											{{-- Upload Form --}}
-											<div x-show="activeTab === 'upload'" x-cloak class="flex flex-col gap-2">
+												{{-- Upload Form --}}
+												<div x-show="activeTab === 'upload'" x-cloak class="flex flex-col gap-2">
+													<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex flex-col gap-2">
+														@csrf
+														<input type="hidden" name="type" value="{{ $type }}">
+														<div class="flex items-center gap-2">
+															<input type="file" name="files[]" multiple required
+																   class="text-sm text-gray-500 dark:text-gray-400
+																		  file:mr-4 file:py-2 file:px-4
+																		  file:rounded file:border-0
+																		  file:text-sm file:font-semibold
+																		  file:bg-indigo-50 file:text-indigo-700
+																		  hover:file:bg-indigo-100
+																		  dark:file:bg-indigo-900 dark:file:text-indigo-200">
+															<x-button type="submit" class="whitespace-nowrap">
+																Upload
+															</x-button>
+														</div>
+														@error('files')
+															<div class="text-xs text-red-600 dark:text-red-400">
+																@if(is_array($message))
+																	<ul class="list-disc list-inside">
+																		@foreach($message as $error)
+																			<li>{{ $error }}</li>
+																		@endforeach
+																	</ul>
+																@else
+																	{{ $message }}
+																@endif
+															</div>
+														@enderror
+													</form>
+													@if($isReusable)
+														<p class="text-xs text-gray-500 dark:text-gray-400">
+															💡 Tip: Add reusable documents to your <a href="{{ route('documents.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Document Library</a> to reuse them across sections.
+														</p>
+													@endif
+												</div>
+
+												{{-- Library Selection Form --}}
+												<div x-show="activeTab === 'library'" x-cloak class="flex flex-col gap-2">
+													<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" class="flex flex-col gap-2">
+														@csrf
+														<input type="hidden" name="type" value="{{ $type }}">
+														<div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2 space-y-2">
+															@foreach($libraryDocuments as $doc)
+																<label class="flex items-start gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
+																	<input type="checkbox" name="library_document_ids[]" value="{{ $doc->id }}"
+																		   class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+																	<div class="flex-1">
+																		<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+																			{{ $doc->title }}
+																		</div>
+																		@if($doc->subject_code)
+																			<div class="text-xs text-gray-500 dark:text-gray-400">
+																				{{ $doc->subject_code }}
+																			</div>
+																		@endif
+																		<div class="text-xs text-gray-400 dark:text-gray-500">
+																			{{ number_format((($doc->metadata_json ?? [])['size'] ?? 0) / 1024, 2) }} KB
+																		</div>
+																	</div>
+																</label>
+															@endforeach
+														</div>
+														<x-button type="submit" class="whitespace-nowrap">
+															Add Selected
+														</x-button>
+													</form>
+												</div>
+											</div>
+										@else
+											{{-- Upload Form (when library is not available) --}}
+											<div class="flex flex-col gap-2">
 												<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" enctype="multipart/form-data" class="flex flex-col gap-2">
 													@csrf
 													<input type="hidden" name="type" value="{{ $type }}">
@@ -349,41 +421,7 @@
 													</p>
 												@endif
 											</div>
-
-											{{-- Library Selection Form --}}
-											@if($isReusable && $libraryDocuments->count() > 0)
-												<div x-show="activeTab === 'library'" x-cloak class="flex flex-col gap-2">
-													<form method="POST" action="{{ route('portfolio-items.store', $portfolio) }}" class="flex flex-col gap-2">
-														@csrf
-														<input type="hidden" name="type" value="{{ $type }}">
-														<div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2 space-y-2">
-															@foreach($libraryDocuments as $doc)
-																<label class="flex items-start gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
-																	<input type="checkbox" name="library_document_ids[]" value="{{ $doc->id }}"
-																		   class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-																	<div class="flex-1">
-																		<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-																			{{ $doc->title }}
-																		</div>
-																		@if($doc->subject_code)
-																			<div class="text-xs text-gray-500 dark:text-gray-400">
-																				{{ $doc->subject_code }}
-																			</div>
-																		@endif
-																		<div class="text-xs text-gray-400 dark:text-gray-500">
-																			{{ number_format(($doc->metadata_json['size'] ?? 0) / 1024, 2) }} KB
-																		</div>
-																	</div>
-																</label>
-															@endforeach
-														</div>
-														<x-button type="submit" class="whitespace-nowrap">
-															Add Selected
-														</x-button>
-													</form>
-												</div>
-											@endif
-										</div>
+										@endif
 									</div>
 								@endif
 							</div>
