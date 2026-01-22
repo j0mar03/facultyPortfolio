@@ -30,12 +30,33 @@ command_exists() {
 
 # Check for required commands
 echo -e "${YELLOW}Checking requirements...${NC}"
-for cmd in docker docker-compose nginx; do
-    if ! command_exists $cmd; then
-        echo -e "${RED}Error: $cmd is not installed${NC}"
-        exit 1
-    fi
-done
+
+# Check for docker
+if ! command_exists docker; then
+    echo -e "${RED}Error: docker is not installed${NC}"
+    exit 1
+fi
+
+# Check for docker compose (v2) or docker-compose (v1)
+DOCKER_COMPOSE_CMD=""
+if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker compose"
+    echo -e "${GREEN}Found Docker Compose v2 (docker compose)${NC}"
+elif command_exists docker-compose; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+    echo -e "${GREEN}Found Docker Compose v1 (docker-compose)${NC}"
+else
+    echo -e "${RED}Error: docker compose or docker-compose is not installed${NC}"
+    echo "Please install Docker Compose v2 (recommended) or v1"
+    exit 1
+fi
+
+# Check for nginx
+if ! command_exists nginx; then
+    echo -e "${RED}Error: nginx is not installed${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}All requirements met${NC}"
 echo ""
 
@@ -52,7 +73,7 @@ echo ""
 echo -e "${YELLOW}Checking if MySQL database is running...${NC}"
 if ! docker ps | grep -q "facultyportfolio-db"; then
     echo -e "${RED}Error: Main database (facultyportfolio-db) is not running${NC}"
-    echo "Please start it with: docker-compose up -d db"
+    echo "Please start it with: $DOCKER_COMPOSE_CMD up -d db"
     exit 1
 fi
 echo -e "${GREEN}Database is running${NC}"
@@ -98,7 +119,7 @@ echo ""
 
 # Start BookStack
 echo -e "${YELLOW}Starting BookStack containers...${NC}"
-docker-compose -f docker-compose.bookstack.yml up -d
+$DOCKER_COMPOSE_CMD -f docker-compose.bookstack.yml up -d
 echo -e "${GREEN}BookStack started successfully${NC}"
 echo ""
 
@@ -129,8 +150,8 @@ echo ""
 echo -e "${YELLOW}IMPORTANT: Change the default password immediately after first login!${NC}"
 echo ""
 echo "To view logs:"
-echo "  docker-compose -f docker-compose.bookstack.yml logs -f"
+echo "  $DOCKER_COMPOSE_CMD -f docker-compose.bookstack.yml logs -f"
 echo ""
 echo "To stop BookStack:"
-echo "  docker-compose -f docker-compose.bookstack.yml down"
+echo "  $DOCKER_COMPOSE_CMD -f docker-compose.bookstack.yml down"
 echo ""
