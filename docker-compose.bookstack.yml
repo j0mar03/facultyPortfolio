@@ -10,6 +10,7 @@ services:
       - PGID=1000
       - TZ=UTC
       - APP_URL=${BOOKSTACK_URL:-https://site.itechportfolio.xyz}
+      - APP_KEY=${BOOKSTACK_APP_KEY:-base64:BC7fQplF+Fv7dN24GnD/zOgfqdmasJzkuWrt1qoEQLw=}
       - DB_HOST=facultyportfolio-db
       - DB_PORT=3306
       - DB_DATABASE=bookstack

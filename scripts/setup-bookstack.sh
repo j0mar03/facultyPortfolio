@@ -291,6 +291,22 @@ echo -e "${GREEN}No SSL certificates needed on the server (Cloudflare Flexible m
 echo -e "${YELLOW}Make sure your domains are proxied through Cloudflare (orange cloud)${NC}"
 echo ""
 
+# Generate APP_KEY if not set
+if [ -z "$BOOKSTACK_APP_KEY" ]; then
+    echo -e "${YELLOW}Generating APP_KEY for BookStack...${NC}"
+    # Try to generate using BookStack image, fallback to openssl
+    GENERATED_KEY=$(docker run --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:latest -c "php artisan key:generate --show 2>/dev/null | grep -E '^base64:' || echo ''" 2>/dev/null | head -1)
+    
+    if [ -z "$GENERATED_KEY" ] || [ "$GENERATED_KEY" = "" ]; then
+        # Fallback: generate base64 key
+        GENERATED_KEY="base64:$(openssl rand -base64 32)"
+    fi
+    
+    export BOOKSTACK_APP_KEY="$GENERATED_KEY"
+    echo -e "${GREEN}✓ APP_KEY generated${NC}"
+    echo -e "${YELLOW}Note: Save this key for future use: $GENERATED_KEY${NC}"
+fi
+
 # Start BookStack
 echo -e "${YELLOW}Starting BookStack containers...${NC}"
 $DOCKER_COMPOSE_CMD -f docker-compose.bookstack.yml up -d
