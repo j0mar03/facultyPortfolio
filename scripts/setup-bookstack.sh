@@ -111,8 +111,53 @@ if [ "$NGINX_IN_DOCKER" = true ]; then
     if grep -q "site.itechportfolio.xyz" /tmp/nginx-current.conf; then
         echo -e "${YELLOW}BookStack configuration already exists in Docker nginx (skipping)${NC}"
     else
+        # Check if nginx container is on facultyportfolio_default network
+        # If not, we'll connect it so it can reach BookStack
+        NGINX_ON_FACULTY_NETWORK=false
+        if docker inspect "$DOCKER_NGINX_CONTAINER" --format '{{range $key, $value := .NetworkSettings.Networks}}{{$key}} {{end}}' 2>/dev/null | grep -q "facultyportfolio_default"; then
+            NGINX_ON_FACULTY_NETWORK=true
+            echo -e "${GREEN}✓ Nginx container is on facultyportfolio_default network${NC}"
+        else
+            echo -e "${YELLOW}Connecting nginx container to facultyportfolio_default network...${NC}"
+            docker network connect facultyportfolio_default "$DOCKER_NGINX_CONTAINER" 2>/dev/null && {
+                NGINX_ON_FACULTY_NETWORK=true
+                echo -e "${GREEN}✓ Connected nginx to facultyportfolio_default network${NC}"
+            } || echo -e "${YELLOW}Could not connect to network (may already be connected)${NC}"
+        fi
+        
+        # Check if BookStack container exists and is on the same network
+        BOOKSTACK_ON_SAME_NETWORK=false
+        if docker ps | grep -q "bookstack"; then
+            if docker inspect bookstack --format '{{range $key, $value := .NetworkSettings.Networks}}{{$key}} {{end}}' 2>/dev/null | grep -q "facultyportfolio_default"; then
+                if [ "$NGINX_ON_FACULTY_NETWORK" = true ]; then
+                    BOOKSTACK_ON_SAME_NETWORK=true
+                    echo -e "${GREEN}✓ BookStack is on the same network, can use container name${NC}"
+                fi
+            fi
+        fi
+        
+        # Determine proxy target
+        if [ "$BOOKSTACK_ON_SAME_NETWORK" = true ]; then
+            PROXY_TARGET="http://bookstack:80"
+            echo -e "${GREEN}Using container name: $PROXY_TARGET${NC}"
+        else
+            # Get Docker gateway IP (host IP from container perspective)
+            DOCKER_GATEWAY=$(docker inspect "$DOCKER_NGINX_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' 2>/dev/null | head -1)
+            
+            # If gateway not found, try common Docker bridge gateway
+            if [ -z "$DOCKER_GATEWAY" ] || [ "$DOCKER_GATEWAY" = "<no value>" ] || [ -z "$(echo $DOCKER_GATEWAY | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')" ]; then
+                DOCKER_GATEWAY="172.17.0.1"
+                echo -e "${YELLOW}Using default Docker gateway: $DOCKER_GATEWAY${NC}"
+            else
+                echo -e "${GREEN}Found Docker gateway: $DOCKER_GATEWAY${NC}"
+            fi
+            
+            PROXY_TARGET="http://$DOCKER_GATEWAY:8084"
+            echo -e "${GREEN}Using gateway IP: $PROXY_TARGET${NC}"
+        fi
+        
         # Add BookStack server block
-        BOOKSTACK_BLOCK=$(cat <<'EOF'
+        BOOKSTACK_BLOCK=$(cat <<EOF
 
 # BookStack - site.itechportfolio.xyz
 server {
@@ -133,21 +178,21 @@ server {
     client_max_body_size 100M;
     client_body_buffer_size 100M;
 
-    # Proxy to BookStack container (on host)
+    # Proxy to BookStack
     location / {
-        proxy_pass http://host.docker.internal:8084;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        proxy_pass $PROXY_TARGET;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
         
         # Cloudflare specific headers
-        proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
-        proxy_set_header CF-Ray $http_cf_ray;
-        proxy_set_header CF-Visitor $http_cf_visitor;
+        proxy_set_header CF-Connecting-IP \$http_cf_connecting_ip;
+        proxy_set_header CF-Ray \$http_cf_ray;
+        proxy_set_header CF-Visitor \$http_cf_visitor;
         
         # Standard proxy headers
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Host \$host;
         proxy_set_header X-Forwarded-Ssl on;
         proxy_set_header X-Forwarded-Port 443;
         
