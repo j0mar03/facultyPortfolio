@@ -23,8 +23,9 @@ echo -e "${YELLOW}Checking database user...${NC}"
 
 # Check if user exists
 USER_EXISTS=$(docker exec facultyportfolio-db mysql -u root -proot -e "SELECT User FROM mysql.user WHERE User='bookstack_user';" 2>/dev/null | grep -c "bookstack_user" || echo "0")
+USER_EXISTS=$(echo "$USER_EXISTS" | tr -d '\n' | head -1)
 
-if [ "$USER_EXISTS" -eq "0" ]; then
+if [ "${USER_EXISTS:-0}" -eq "0" ]; then
     echo -e "${YELLOW}User doesn't exist, creating...${NC}"
     
     docker exec facultyportfolio-db mysql -u root -proot <<EOF
@@ -41,18 +42,29 @@ fi
 
 # Verify user can connect
 echo -e "${YELLOW}Testing database connection...${NC}"
-if docker exec facultyportfolio-db mysql -u bookstack_user -p'BookstackDB2024!Secure' -e "USE bookstack; SELECT 1;" 2>/dev/null; then
-    echo -e "${GREEN}✓ Database connection successful${NC}"
-else
+CONNECTION_TEST=$(docker exec facultyportfolio-db mysql -u bookstack_user -p'BookstackDB2024!Secure' -e "USE bookstack; SELECT 1;" 2>&1)
+if echo "$CONNECTION_TEST" | grep -q "ERROR\|Access denied"; then
     echo -e "${RED}✗ Database connection failed${NC}"
+    echo "   Error: $(echo "$CONNECTION_TEST" | grep -i error | head -1)"
     echo "   Trying to fix permissions..."
     
-    docker exec facultyportfolio-db mysql -u root -proot <<EOF
+    docker exec facultyportfolio-db mysql -u root -proot <<EOF 2>/dev/null
+DROP USER IF EXISTS 'bookstack_user'@'%';
+CREATE USER 'bookstack_user'@'%' IDENTIFIED BY 'BookstackDB2024!Secure';
 GRANT ALL PRIVILEGES ON bookstack.* TO 'bookstack_user'@'%';
 FLUSH PRIVILEGES;
 EOF
     
-    echo -e "${GREEN}✓ Permissions updated${NC}"
+    echo -e "${GREEN}✓ User recreated with permissions${NC}"
+    
+    # Test again
+    if docker exec facultyportfolio-db mysql -u bookstack_user -p'BookstackDB2024!Secure' -e "USE bookstack; SELECT 1;" 2>&1 | grep -q "ERROR\|Access denied"; then
+        echo -e "${RED}✗ Still failing. Check password and database name.${NC}"
+    else
+        echo -e "${GREEN}✓ Database connection successful after fix${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ Database connection successful${NC}"
 fi
 
 echo ""
