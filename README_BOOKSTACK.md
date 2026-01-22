@@ -51,7 +51,8 @@ site.itechportfolio.xyz       → Port 8084 (BookStack)
 
 - `docker-compose.bookstack.yml` - Docker configuration
 - `scripts/nginx/bookstack.conf` - Nginx reverse proxy for BookStack
-- `scripts/nginx/portfolio.conf` - Nginx reverse proxy for Portfolio
+
+**Note**: Portfolio nginx configuration is not included - your existing portfolio setup remains unchanged.
 - `scripts/setup-bookstack.sh` - Automated setup script
 - `bookstack.env.example` - Environment variables example
 

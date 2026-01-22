@@ -68,7 +68,7 @@ All services share the same MySQL database container (`facultyportfolio-db`):
 
 All nginx configurations are in `scripts/nginx/`:
 
-- `portfolio.conf` - Main portfolio application
+- (portfolio config - existing, not modified)
 - `bookstack.conf` - BookStack documentation
 - `nextcloud.conf` - Nextcloud file storage
 - `snipeit.conf` - Snipe-IT asset management

@@ -114,7 +114,7 @@ facultyportfolio-db (MySQL 8.0 Container)
 │   ├── setup-nextcloud.sh                     # Nextcloud setup
 │   ├── setup-snipeit.sh                       # Snipe-IT setup
 │   └── nginx/
-│       ├── portfolio.conf                     # Portfolio nginx
+│       ├── (portfolio config - existing, not modified)
 │       ├── bookstack.conf                     # BookStack nginx
 │       ├── nextcloud.conf                     # Nextcloud nginx
 │       └── snipeit.conf                       # Snipe-IT nginx

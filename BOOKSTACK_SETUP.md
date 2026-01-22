@@ -64,10 +64,7 @@ docker-compose up -d db
 
 Copy nginx configurations:
 ```bash
-sudo cp scripts/nginx/portfolio.conf /etc/nginx/sites-available/portfolio
 sudo cp scripts/nginx/bookstack.conf /etc/nginx/sites-available/bookstack
-
-sudo ln -s /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
 sudo ln -s /etc/nginx/sites-available/bookstack /etc/nginx/sites-enabled/
 ```
 

@@ -30,7 +30,7 @@ command_exists() {
 
 # Check for required commands
 echo -e "${YELLOW}Checking requirements...${NC}"
-for cmd in docker docker-compose nginx certbot; do
+for cmd in docker docker-compose nginx; do
     if ! command_exists $cmd; then
         echo -e "${RED}Error: $cmd is not installed${NC}"
         exit 1
@@ -58,7 +58,7 @@ fi
 echo -e "${GREEN}Database is running${NC}"
 echo ""
 
-# Setup nginx configuration for site.itechportfolio.xyz (BookStack)
+# Setup nginx configuration for site.itechportfolio.xyz (BookStack ONLY)
 echo -e "${YELLOW}Setting up nginx configuration for BookStack...${NC}"
 BOOKSTACK_NGINX_CONF="/etc/nginx/sites-available/bookstack"
 BOOKSTACK_NGINX_ENABLED="/etc/nginx/sites-enabled/bookstack"
@@ -68,21 +68,11 @@ if [ ! -f "$BOOKSTACK_NGINX_CONF" ]; then
     ln -sf "$BOOKSTACK_NGINX_CONF" "$BOOKSTACK_NGINX_ENABLED"
     echo -e "${GREEN}BookStack nginx configuration created${NC}"
 else
-    echo -e "${YELLOW}BookStack nginx configuration already exists${NC}"
+    echo -e "${YELLOW}BookStack nginx configuration already exists (skipping)${NC}"
 fi
 
-# Setup nginx configuration for portfolio.itechportfolio.xyz
-echo -e "${YELLOW}Setting up nginx configuration for Portfolio...${NC}"
-PORTFOLIO_NGINX_CONF="/etc/nginx/sites-available/portfolio"
-PORTFOLIO_NGINX_ENABLED="/etc/nginx/sites-enabled/portfolio"
-
-if [ ! -f "$PORTFOLIO_NGINX_CONF" ]; then
-    cp scripts/nginx/portfolio.conf "$PORTFOLIO_NGINX_CONF"
-    ln -sf "$PORTFOLIO_NGINX_CONF" "$PORTFOLIO_NGINX_ENABLED"
-    echo -e "${GREEN}Portfolio nginx configuration created${NC}"
-else
-    echo -e "${YELLOW}Portfolio nginx configuration already exists${NC}"
-fi
+# Note: Portfolio configuration is NOT touched - it's already working!
+echo -e "${GREEN}✓ Portfolio configuration left untouched (already working)${NC}"
 
 # Test nginx configuration
 echo -e "${YELLOW}Testing nginx configuration...${NC}"
@@ -122,9 +112,10 @@ echo -e "${GREEN}==================================="
 echo "BookStack Setup Complete!"
 echo "===================================${NC}"
 echo ""
-echo "Services:"
-echo "  - Portfolio:  https://portfolio.itechportfolio.xyz"
-echo "  - BookStack:  https://site.itechportfolio.xyz"
+echo "BookStack Service:"
+echo "  - URL:  https://site.itechportfolio.xyz"
+echo ""
+echo -e "${GREEN}Note: Your existing portfolio at portfolio.itechportfolio.xyz is unchanged${NC}"
 echo ""
 echo -e "${YELLOW}Cloudflare Configuration:${NC}"
 echo "  - Make sure domains are proxied (orange cloud) in Cloudflare"

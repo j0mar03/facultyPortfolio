@@ -61,9 +61,8 @@ The nginx configurations are already set up for Cloudflare:
 ### Configuration Files
 
 - `scripts/nginx/bookstack.conf` - BookStack (site.itechportfolio.xyz)
-- `scripts/nginx/portfolio.conf` - Portfolio (portfolio.itechportfolio.xyz)
 
-Both are configured for Cloudflare Flexible mode.
+**Note**: Portfolio configuration is not included - your existing portfolio setup remains unchanged.
 
 ## ✅ Verification
 

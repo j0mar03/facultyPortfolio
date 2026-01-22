@@ -16,18 +16,16 @@ This document lists all the files created for the BookStack setup.
   - Reverse proxy to port 8084
   - Security headers
   
-- **`scripts/nginx/portfolio.conf`** - Nginx config for portfolio.itechportfolio.xyz
-  - SSL support
-  - Reverse proxy to port 8081 (main Laravel app)
-  - WebSocket support
+**Note**: Portfolio nginx configuration is NOT created - your existing portfolio setup remains untouched.
 
 ### Setup Script
 - **`scripts/setup-bookstack.sh`** - Automated setup script
   - Checks prerequisites
-  - Configures nginx
-  - Sets up SSL certificates
+  - Configures nginx for BookStack ONLY (doesn't touch portfolio)
+  - Creates database and user automatically
   - Starts containers
   - Fully automated!
+  - **Safe**: Won't modify your existing portfolio configuration
 
 ### Documentation
 - **`BOOKSTACK_SETUP.md`** - Complete detailed setup guide
@@ -110,8 +108,7 @@ facultyPortfolio/
 ├── scripts/
 │   ├── setup-bookstack.sh                # Automated setup script
 │   └── nginx/
-│       ├── bookstack.conf                # BookStack nginx config
-│       └── portfolio.conf                # Portfolio nginx config
+│       └── bookstack.conf                # BookStack nginx config only
 │
 └── Documentation/
     ├── BOOKSTACK_SETUP.md                # Complete setup guide

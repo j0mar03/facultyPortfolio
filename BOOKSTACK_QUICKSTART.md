@@ -49,15 +49,15 @@ If you prefer manual steps:
 docker-compose up -d db
 ```
 
-### 2. Configure Nginx
+### 2. Configure Nginx (BookStack Only)
 
 ```bash
-sudo cp scripts/nginx/portfolio.conf /etc/nginx/sites-available/
-sudo cp scripts/nginx/bookstack.conf /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
+sudo cp scripts/nginx/bookstack.conf /etc/nginx/sites-available/bookstack
 sudo ln -s /etc/nginx/sites-available/bookstack /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+**Note**: Your existing portfolio configuration is not touched.
 
 ### 3. Verify Cloudflare Configuration
 
