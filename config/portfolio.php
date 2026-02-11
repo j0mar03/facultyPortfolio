@@ -34,7 +34,7 @@ return [
     */
     'item_types' => [
         'faculty_assignment' => 'Faculty Assignment/Loading',
-        'class_list' => 'Class List',
+        'class_list' => 'Class Records',
         'syllabus' => 'Syllabus',
         'sample_quiz' => 'Sample Quiz',
         'major_exam' => 'Major Exam',
@@ -42,9 +42,8 @@ return [
         'activity_rubrics' => 'Activity Rubrics',
         'grade_sheets' => 'Grade Sheets',
         'sample_ims' => 'Sample Instructional Materials',
-        'acknowledgement' => 'Acknowledgement Receipt',
+        'acknowledgement' => 'Proof of Returned Exam/Activities',
         'attendance' => 'Attendance Records',
-        'other' => 'Other Documents',
     ],
 
     /*
