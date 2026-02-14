@@ -82,6 +82,8 @@ Route::middleware([
             ->name('subjects.index');
         Route::get('/subjects/{subject}', [\App\Http\Controllers\Chair\SubjectController::class, 'show'])
             ->name('subjects.show');
+        Route::get('/subjects/{subject}/approved-documents', [\App\Http\Controllers\Chair\SubjectController::class, 'approvedDocuments'])
+            ->name('subjects.approved-documents');
         Route::post('/subjects/{subject}/assign', [\App\Http\Controllers\Chair\SubjectController::class, 'assignFaculty'])
             ->name('subjects.assign');
         Route::delete('/subjects/assignments/{classOffering}', [\App\Http\Controllers\Chair\SubjectController::class, 'removeAssignment'])

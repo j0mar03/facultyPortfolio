@@ -1,10 +1,16 @@
 <x-app-layout>
 	<x-slot name="header">
-		<div class="flex justify-between items-center">
+		<div class="flex justify-between items-center gap-3">
 			<h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
 				{{ $subject->code }} - {{ $subject->title }}
 			</h2>
-			<a href="{{ route('chair.subjects.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Subjects</a>
+			<div class="flex items-center gap-4">
+				<a href="{{ route('chair.subjects.approved-documents', ['subject' => $subject, 'academic_year' => ($defaultAcademicYear ?? '2024-2025')]) }}"
+				   class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+					Organized Approved View
+				</a>
+				<a href="{{ route('chair.subjects.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Subjects</a>
+			</div>
 		</div>
 	</x-slot>
 

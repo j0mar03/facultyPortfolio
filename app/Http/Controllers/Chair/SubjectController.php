@@ -119,6 +119,57 @@ class SubjectController extends Controller
         return view('chair.subjects.show', compact('subject', 'availableFaculty', 'defaultAcademicYear'));
     }
 
+    public function approvedDocuments(Request $request, Subject $subject): View
+    {
+        $user = Auth::user();
+        abort_unless($user->role === 'chair', 403);
+
+        // Check if chair manages this course (support many-to-many relationship)
+        $managesCourse = $user->managedCourses->contains($subject->course_id);
+        if (!$managesCourse && $user->course_id) {
+            // Fallback to old single course_id field
+            $managesCourse = $user->course_id === $subject->course_id;
+        }
+        abort_unless($managesCourse, 403, 'You do not manage this course');
+
+        $availableYears = ClassOffering::where('subject_id', $subject->id)
+            ->whereHas('portfolio', function ($query) {
+                $query->where('status', 'approved');
+            })
+            ->distinct()
+            ->pluck('academic_year')
+            ->sort()
+            ->values();
+
+        $selectedYear = $request->get('academic_year', $availableYears->first() ?? '2024-2025');
+
+        $approvedOfferings = ClassOffering::where('subject_id', $subject->id)
+            ->where('academic_year', $selectedYear)
+            ->whereHas('portfolio', function ($query) {
+                $query->where('status', 'approved');
+            })
+            ->with([
+                'faculty',
+                'portfolio.items',
+                'portfolio.reviews.reviewer',
+            ])
+            ->orderBy('term')
+            ->orderBy('section')
+            ->get();
+
+        $requiredTypes = config('portfolio.required_items');
+        $itemTypes = config('portfolio.item_types');
+
+        return view('chair.subjects.approved-documents', compact(
+            'subject',
+            'availableYears',
+            'selectedYear',
+            'approvedOfferings',
+            'requiredTypes',
+            'itemTypes'
+        ));
+    }
+
     public function assignFaculty(Request $request, Subject $subject): RedirectResponse
     {
         $user = Auth::user();

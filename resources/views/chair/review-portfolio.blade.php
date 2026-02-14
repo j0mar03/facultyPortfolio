@@ -80,33 +80,50 @@
 						$uploadedItems = $portfolio->items->groupBy('type');
 					@endphp
 
-					@foreach($itemTypes as $type => $label)
-						@php
-							$isRequired = in_array($type, $requiredTypes);
-							$items = $uploadedItems->get($type, collect());
-							$hasUpload = $items->isNotEmpty();
-						@endphp
+						@foreach($itemTypes as $type => $label)
+							@php
+								$isRequired = in_array($type, $requiredTypes);
+								$items = $uploadedItems->get($type, collect());
+								$hasUpload = $items->isNotEmpty();
+								$isSyllabus = $type === 'syllabus';
+								$isSampleIMs = $type === 'sample_ims';
+								$isFromClassOffering = $isSyllabus || $isSampleIMs;
+								$googleDriveLink = null;
 
-						<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-							<div class="flex items-center gap-2 mb-2">
-								@if($hasUpload)
-									<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-									</svg>
+								if ($portfolio->classOffering) {
+									if ($isSyllabus && !empty($portfolio->classOffering->syllabus) && filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL)) {
+										$googleDriveLink = $portfolio->classOffering->syllabus;
+									} elseif ($isSampleIMs && !empty($portfolio->classOffering->instructional_material) && filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL)) {
+										$googleDriveLink = $portfolio->classOffering->instructional_material;
+									}
+								}
+
+								$hasDocument = $hasUpload || ($isFromClassOffering && $googleDriveLink);
+							@endphp
+
+							<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+								<div class="flex items-center gap-2 mb-2">
+									@if($hasDocument)
+										<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+											<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+										</svg>
 								@else
 									<svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
 										<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"/>
 									</svg>
 								@endif
 								<h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">
-									{{ $label }}
-									@if($isRequired)
-										<span class="text-red-500">*</span>
-									@endif
-								</h4>
-							</div>
+										{{ $label }}
+										@if($isRequired)
+											<span class="text-red-500">*</span>
+										@endif
+										@if($isFromClassOffering)
+											<span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Managed by Chair)</span>
+										@endif
+									</h4>
+								</div>
 
-							@if($hasUpload)
+								@if($hasUpload)
 								<div class="ml-7 space-y-1">
 									@foreach($items as $item)
 										<div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded px-3 py-2">
@@ -165,12 +182,25 @@
 												</form>
 											</div>
 										@endif
-									@endforeach
-								</div>
-							@else
-								<p class="ml-7 text-sm text-gray-500 dark:text-gray-400">No file uploaded</p>
-							@endif
-						</div>
+										@endforeach
+									</div>
+								@elseif($isFromClassOffering && $googleDriveLink)
+									<div class="ml-7">
+										<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded px-3 py-2">
+											<p class="text-sm text-blue-700 dark:text-blue-300 mb-1">Chair-managed Google Drive link:</p>
+											<a href="{{ $googleDriveLink }}" target="_blank" class="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
+												{{ $googleDriveLink }}
+											</a>
+										</div>
+									</div>
+								@elseif($isFromClassOffering && !$googleDriveLink)
+									<p class="ml-7 text-sm text-yellow-700 dark:text-yellow-300">
+										Managed by Chair. No Google Drive link provided yet.
+									</p>
+								@else
+									<p class="ml-7 text-sm text-gray-500 dark:text-gray-400">No file uploaded</p>
+								@endif
+							</div>
 					@endforeach
 				</div>
 			</div>
