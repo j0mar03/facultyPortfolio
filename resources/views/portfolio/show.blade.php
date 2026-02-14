@@ -32,30 +32,13 @@
 					</div>
 					@if(in_array($portfolio->status, ['draft', 'rejected']))
 						@php
-							$requiredTypes = config('portfolio.required_items');
+							$completion = $portfolio->completionStats();
+							$requiredTypes = $completion['required_types'];
 							$itemTypes = config('portfolio.item_types');
-							$uploadedTypes = $portfolio->items->pluck('type')->unique()->toArray();
-							
-							// Check for Syllabus and Sample IMs from class offering
-							$hasSyllabus = false;
-							$hasIM = false;
-							
-							if ($portfolio->classOffering) {
-								$hasSyllabus = !empty($portfolio->classOffering->syllabus) && filter_var($portfolio->classOffering->syllabus, FILTER_VALIDATE_URL);
-								$hasIM = !empty($portfolio->classOffering->instructional_material) && filter_var($portfolio->classOffering->instructional_material, FILTER_VALIDATE_URL);
-							}
-							
-							if ($hasSyllabus && in_array('syllabus', $requiredTypes)) {
-								$uploadedTypes[] = 'syllabus';
-							}
-							if ($hasIM && in_array('sample_ims', $requiredTypes)) {
-								$uploadedTypes[] = 'sample_ims';
-							}
-							
-							$missingTypes = array_diff($requiredTypes, $uploadedTypes);
+							$missingTypes = $completion['missing_types'];
 							$isComplete = empty($missingTypes);
-							$uploadedCount = count(array_intersect($requiredTypes, $uploadedTypes));
-							$totalRequired = count($requiredTypes);
+							$uploadedCount = $completion['completed'];
+							$totalRequired = $completion['total'];
 						@endphp
 						
 						<div class="text-right">
@@ -432,5 +415,4 @@
 		</div>
 	</div>
 </x-app-layout>
-
 

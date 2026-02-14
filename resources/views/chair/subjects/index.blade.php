@@ -197,6 +197,9 @@
 											@else
 												@foreach($subject->classOfferings as $offering)
 													@if($offering->portfolio)
+														@php
+															$completion = $offering->portfolio->completionStats();
+														@endphp
 														<div class="mb-2">
 															<div class="flex items-center gap-2">
 																<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
@@ -207,16 +210,11 @@
 																	{{ ucfirst($offering->portfolio->status) }}
 																</span>
 																<span class="text-xs text-gray-500 dark:text-gray-400">
-																	{{ $offering->portfolio->items->count() }}/11 docs
+																	{{ $completion['completed'] }}/{{ $completion['total'] }} docs
 																</span>
 															</div>
-															@php
-																$requiredCount = 11;
-																$uploadedCount = $offering->portfolio->items->count();
-																$percentage = $requiredCount > 0 ? ($uploadedCount / $requiredCount) * 100 : 0;
-															@endphp
 															<div class="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-																<div class="bg-indigo-600 h-1.5 rounded-full" style="width: {{ min($percentage, 100) }}%"></div>
+																<div class="bg-indigo-600 h-1.5 rounded-full" style="width: {{ min($completion['percentage'], 100) }}%"></div>
 															</div>
 														</div>
 													@else

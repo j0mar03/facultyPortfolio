@@ -8,7 +8,6 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -41,7 +40,7 @@ class DashboardController extends Controller
         // Get all class offerings for this course
         $classOfferings = ClassOffering::whereHas('subject', function($query) use ($selectedCourse) {
             $query->where('course_id', $selectedCourse->id);
-        })->with(['subject', 'faculty', 'portfolio.items'])->get();
+        })->with(['subject', 'faculty', 'portfolio.items', 'portfolio.classOffering'])->get();
 
         $totalOfferings = $classOfferings->count();
 
@@ -78,9 +77,9 @@ class DashboardController extends Controller
             foreach ($offerings as $offering) {
                 if ($offering->portfolio) {
                     $portfolioCount++;
-                    $uploadedTypes = $offering->portfolio->items->pluck('type')->unique()->count();
-                    $completedDocs += $uploadedTypes;
-                    $totalDocs += $totalRequiredDocs;
+                    $completion = $offering->portfolio->completionStats();
+                    $completedDocs += $completion['completed'];
+                    $totalDocs += $completion['total'];
                     $statuses[$offering->portfolio->status]++;
                 } else {
                     $statuses['none']++;

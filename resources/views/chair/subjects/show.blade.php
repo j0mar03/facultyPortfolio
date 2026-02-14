@@ -306,16 +306,17 @@
 								<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
 							@enderror
 						</div>
-							@if($offering->portfolio)
-								@php
-									$portfolio = $offering->portfolio;
-									$requiredTypes = config('portfolio.required_items');
-									$itemTypes = config('portfolio.item_types');
-									$uploadedItems = $portfolio->items->groupBy('type');
-									$uploadedCount = $uploadedItems->count();
-									$totalRequired = count($requiredTypes);
-									$percentage = $totalRequired > 0 ? ($uploadedCount / $totalRequired) * 100 : 0;
-								@endphp
+								@if($offering->portfolio)
+									@php
+										$portfolio = $offering->portfolio;
+										$completion = $portfolio->completionStats();
+										$requiredTypes = $completion['required_types'];
+										$itemTypes = config('portfolio.item_types');
+										$uploadedTypes = $completion['uploaded_types'];
+										$uploadedCount = $completion['completed'];
+										$totalRequired = $completion['total'];
+										$percentage = $completion['percentage'];
+									@endphp
 
 								<div class="mb-3">
 									<div class="flex items-center justify-between mb-1">
@@ -331,14 +332,14 @@
 									</div>
 								</div>
 
-								<div class="bg-gray-50 dark:bg-gray-700/50 rounded p-3">
-									<h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Uploaded Documents:</h5>
-									<div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-										@foreach($requiredTypes as $type)
-											@php
-												$hasUpload = $uploadedItems->has($type);
-												$label = $itemTypes[$type] ?? $type;
-											@endphp
+									<div class="bg-gray-50 dark:bg-gray-700/50 rounded p-3">
+										<h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Uploaded Documents:</h5>
+										<div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+											@foreach($requiredTypes as $type)
+												@php
+													$hasUpload = in_array($type, $uploadedTypes, true);
+													$label = $itemTypes[$type] ?? $type;
+												@endphp
 											<div class="flex items-center gap-1 text-xs">
 												@if($hasUpload)
 													<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">

@@ -147,17 +147,15 @@
 												<div class="text-xs">{{ $portfolio->classOffering->academic_year }}</div>
 											</td>
 											<td class="px-4 py-4 whitespace-nowrap">
+												@php
+													$completion = $portfolio->completionStats();
+												@endphp
 												<div class="flex items-center gap-2">
 													<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-														{{ $portfolio->items->count() }} docs
+														{{ $completion['completed'] }}/{{ $completion['total'] }} docs
 													</span>
 													<div class="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-														@php
-															$requiredCount = 11;
-															$uploadedCount = $portfolio->items->count();
-															$percentage = $requiredCount > 0 ? ($uploadedCount / $requiredCount) * 100 : 0;
-														@endphp
-														<div class="bg-green-600 h-2 rounded-full" style="width: {{ min($percentage, 100) }}%"></div>
+														<div class="bg-green-600 h-2 rounded-full" style="width: {{ min($completion['percentage'], 100) }}%"></div>
 													</div>
 												</div>
 											</td>

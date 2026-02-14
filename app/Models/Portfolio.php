@@ -49,6 +49,52 @@ class Portfolio extends Model
     {
         return $this->reviews()->latest()->first();
     }
-}
 
+    /**
+     * Return completion stats for required portfolio documents.
+     *
+     * Syllabus and Sample IMs are considered uploaded when they are valid
+     * Google Drive links on the related class offering.
+     */
+    public function completionStats(): array
+    {
+        $requiredTypes = config('portfolio.required_items', []);
+        $uploadedTypes = $this->relationLoaded('items')
+            ? $this->items->pluck('type')->unique()->values()->all()
+            : $this->items()->pluck('type')->unique()->values()->all();
+
+        $classOffering = $this->relationLoaded('classOffering')
+            ? $this->classOffering
+            : $this->classOffering()->first();
+
+        if ($classOffering) {
+            if (in_array('syllabus', $requiredTypes, true) && $this->isValidUrl($classOffering->syllabus)) {
+                $uploadedTypes[] = 'syllabus';
+            }
+
+            if (in_array('sample_ims', $requiredTypes, true) && $this->isValidUrl($classOffering->instructional_material)) {
+                $uploadedTypes[] = 'sample_ims';
+            }
+        }
+
+        $uploadedRequiredTypes = array_values(array_intersect($requiredTypes, array_unique($uploadedTypes)));
+        $missingTypes = array_values(array_diff($requiredTypes, $uploadedRequiredTypes));
+        $total = count($requiredTypes);
+        $completed = count($uploadedRequiredTypes);
+
+        return [
+            'required_types' => $requiredTypes,
+            'uploaded_types' => $uploadedRequiredTypes,
+            'missing_types' => $missingTypes,
+            'completed' => $completed,
+            'total' => $total,
+            'percentage' => $total > 0 ? ($completed / $total) * 100 : 0,
+        ];
+    }
+
+    private function isValidUrl(?string $value): bool
+    {
+        return !empty($value) && filter_var($value, FILTER_VALIDATE_URL);
+    }
+}
 

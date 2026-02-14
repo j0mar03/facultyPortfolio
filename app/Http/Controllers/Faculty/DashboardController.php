@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassOffering;
-use App\Models\Portfolio;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -17,7 +15,7 @@ class DashboardController extends Controller
 
         // Get all class offerings for this faculty
         $classOfferings = ClassOffering::where('faculty_id', $user->id)
-            ->with(['subject.course', 'portfolio.items'])
+            ->with(['subject.course', 'portfolio.items', 'portfolio.classOffering'])
             ->get();
 
         // Calculate statistics
@@ -28,22 +26,18 @@ class DashboardController extends Controller
         $portfoliosRejected = $classOfferings->filter(fn($o) => $o->portfolio && $o->portfolio->status === 'rejected')->count();
         $portfoliosDraft = $classOfferings->filter(fn($o) => $o->portfolio && $o->portfolio->status === 'draft')->count();
 
-        // Document completion statistics
-        $requiredDocuments = config('portfolio.required_items');
-        $totalRequiredDocs = count($requiredDocuments);
+        $totalRequiredDocs = count(config('portfolio.required_items'));
 
         $documentStats = [];
         foreach ($classOfferings as $offering) {
             if ($offering->portfolio) {
-                $uploadedTypes = $offering->portfolio->items->pluck('type')->unique();
-                $completedDocs = $uploadedTypes->count();
-                $percentage = $totalRequiredDocs > 0 ? ($completedDocs / $totalRequiredDocs) * 100 : 0;
+                $completion = $offering->portfolio->completionStats();
 
                 $documentStats[] = [
                     'offering' => $offering,
-                    'completed' => $completedDocs,
-                    'total' => $totalRequiredDocs,
-                    'percentage' => $percentage,
+                    'completed' => $completion['completed'],
+                    'total' => $completion['total'],
+                    'percentage' => $completion['percentage'],
                 ];
             }
         }

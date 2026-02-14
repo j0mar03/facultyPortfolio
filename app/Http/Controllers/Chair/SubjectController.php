@@ -82,7 +82,7 @@ class SubjectController extends Controller
         $subjects = $subjectsQuery
             ->with(['classOfferings' => function ($query) use ($selectedYear) {
                 $query->where('academic_year', $selectedYear)
-                      ->with(['faculty', 'portfolio.items']);
+                      ->with(['faculty', 'portfolio.items', 'portfolio.classOffering']);
             }])
             ->orderBy('year_level')
             ->orderBy('term')
@@ -108,7 +108,7 @@ class SubjectController extends Controller
         }
         abort_unless($managesCourse, 403, 'You do not manage this course');
 
-        $subject->load('classOfferings.faculty');
+        $subject->load(['classOfferings.faculty', 'classOfferings.portfolio.items', 'classOfferings.portfolio.classOffering']);
 
         // Get faculty and chairs who can be assigned (chairs can also teach)
         $availableFaculty = User::whereIn('role', ['faculty', 'chair'])->orderBy('name')->get();
