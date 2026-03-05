@@ -1,0 +1,235 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{amsmath}
+\graphicspath{{figures/}}
+
+% APA 7 references (requires Biber in Overleaf)
+\usepackage[style=apa,backend=biber,sorting=nyt]{biblatex}
+\DeclareLanguageMapping{english}{english-apa}
+\addbibresource{references.bib}
+
+\title{From Paper-Based Compliance to Digital Governance:\\
+Development and Post-Implementation Evaluation of a Role-Based Faculty Portfolio Management System in Higher Education}
+
+\author{
+    \IEEEauthorblockN{Jomar B. Ruiz}
+    \IEEEauthorblockA{Dept. of Computer Engineering \\
+    Polytechnic University of the Philippines\\
+    Marikina City, Philippines \\
+    jbruiz@pup.edu.ph}
+    \and
+    \IEEEauthorblockN{Frescian C. Ruiz}
+    \IEEEauthorblockA{Dept. of Computer Engineering \\
+    Polytechnic University of the Philippines\\
+    Marikina City, Philippines \\
+    fcruiz@pup.edu.ph}
+    \and
+    \IEEEauthorblockN{Zenaida Bonaobra}
+    \IEEEauthorblockA{Dept. of Office Management and Information Technology Department \\
+    Polytechnic University of the Philippines\\
+    Marikina City, Philippines}
+    \and
+    \IEEEauthorblockN{Raymond Alfonso}
+    \IEEEauthorblockA{Dept. of Electrical Engineering \\
+    Polytechnic University of the Philippines\\
+    Antipolo City, Philippines}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Higher education units often manage faculty portfolio compliance through fragmented channels (paper folders, email, and ad hoc cloud storage), resulting in weak status visibility and inefficient evidence preparation for quality assurance. This study developed and evaluated a web-based Faculty Portfolio Management System (FPMS) that formalizes role-based workflow for faculty, chair/reviewer, administrator, and auditor users. Using a design-and-development approach with quantitative post-implementation evaluation, the system implemented class-offering-linked portfolio creation, required-document completeness support, review routing, and report/export functions. Evaluation integrated operational records and survey responses (N=35) using System Usability Scale (SUS) and Technology Acceptance Model (TAM) constructs. In the updated window (2025-11-12 to 2026-03-02), FPMS recorded 162 portfolios, a 17.90\% complete-submission rate (29/162), and 29 reviewed submissions. Processing duration was 14,582.01/4,981.13 minutes (mean/median), while review-turnaround was 23,712.91/24,785.23 minutes (mean/median). User evaluation showed SUS=62.00 and positive TAM outcomes (PU=4.17, PEOU=4.17, BI=4.26). The study contributes a deployable governance-oriented workflow model with measurable post-implementation indicators for higher education compliance operations. Action-level audit evidence remains limited because audit-log rows were unavailable in the analyzed extraction.
+\end{abstract}
+
+\begin{IEEEkeywords}
+faculty portfolio management system, higher education information systems, workflow governance, compliance automation, usability, technology acceptance model
+\end{IEEEkeywords}
+
+\section{Introduction}
+Higher education institutions regularly require faculty members to submit instructional and compliance records for quality assurance and program governance. In many settings, this process is still fragmented across paper folders, email threads, and unstructured cloud storage, creating weak workflow visibility and delayed evidence consolidation. These gaps motivate the development of integrated, role-based compliance systems.
+
+This study developed a web-based Faculty Portfolio Management System (FPMS) and evaluated its post-implementation profile across three domains: workflow, compliance/governance, and usability/acceptance. The evaluation design combined operational system logs and standardized user-evaluation instruments.
+
+\subsection{Research Questions}
+The study addressed the following:
+\begin{enumerate}
+    \item What is the post-implementation workflow profile of FPMS in terms of process organization, status tracking, available operational indicators, and user-perceived turnaround support?
+    \item What is the post-implementation compliance and governance profile in terms of required-document completeness, role-based governance, and available traceability/report-readiness indicators?
+    \item What is the level of usability and user acceptance as measured by SUS and TAM constructs?
+\end{enumerate}
+
+\subsection{Conceptual Basis}
+The evaluation framework follows design-and-development research with usability and acceptance grounding from SUS \parencite{brooke1996sus}, TAM \parencite{davis1989tam}, and design-science artifact logic \parencite{hevner2004dsr}. Usability interpretation references ISO usability concepts \parencite{iso9241_11_2018}.
+
+\subsection{Related Literature Synthesis}
+Recent higher-education workflow and governance studies show that role-aware digital systems improve process visibility, coordination, and institutional documentation quality \parencite{reyes2023fedesk,ikwunne2021collaborativeManagement,fernandoRaguro2021smartUniversity,gutierrezYRestrepo2022inclusiveHEI,lee2023scholarlyProfile}. E-portfolio and portfolio-adjacent artifacts further indicate potential benefits for documentation structure, review support, and usability when integrated into actual academic workflows \parencite{tasatanattakool2023eportfolio,miyazaki2021genericSkill,gantikow2024conceptMaps,badouri2025medicalEportfolio}. In appraisal, QA, and accreditation contexts, evidence suggests that performance frameworks and analytics can support transparency and governance-oriented decision processes \parencite{zhao2024kpiAppraisal,vazquezNoguera2024aneaes,srija2025facultyAppraisal,balisi2025facultyRanking,zakaria2025lecturerInsights,sudha2025googleScholarMetrics,ozeki2021facultyDevelopment}. However, relatively few studies report a unified, deployable faculty compliance platform that combines required-document enforcement, structured review flow, and measurable post-implementation operational indicators in one system.
+
+\section{Methods}
+\subsection{Research Design and Data Sources}
+The study used a design-and-development approach with quantitative descriptive post-implementation evaluation. Data sources included:
+\begin{enumerate}
+    \item Operational FPMS records (portfolio status and timestamps, review records when available).
+    \item Survey responses from active users (N=35).
+\end{enumerate}
+
+\subsection{Evaluation Window}
+Operational extraction window: 2025-11-12 03:59:55 to 2026-03-02 10:05:07.
+
+\subsection{Survey Constructs and Reliability Framing}
+Survey constructs included WI, CS, RT, GT, SUS, and TAM dimensions (PU, PEOU, BI). Reliability was estimated using Cronbach's alpha. The primary reliability-supported acceptance evidence is TAM combined alpha (0.781), while low-alpha subscales are interpreted as exploratory for this cycle.
+
+\section{Results and Discussion}
+\subsection{Respondent Profile}
+\begin{table}[htbp]
+\caption{Respondent Distribution by Role}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Role & n & \% \\
+\midrule
+Faculty & 27 & 77.14 \\
+Chair/Reviewer & 4 & 11.43 \\
+Auditor & 4 & 11.43 \\
+\midrule
+Total & 35 & 100.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Workflow and Turnaround Profile}
+\begin{table}[htbp]
+\caption{Operational Workflow Indicators}
+\centering
+\begin{tabular}{p{2.35cm}p{2.05cm}p{1.05cm}p{1.55cm}}
+\toprule
+Metric & Value & Unit & Notes \\
+\midrule
+Total portfolios & 162 & records & Window total \\
+Processing duration (mean/median) & 14,582.01 / 4,981.13 & minutes & created\_at to submitted\_at (n=29) \\
+Review turnaround (mean/median) & 23,712.91 / 24,785.23 & minutes & submitted\_at to decision (n=29) \\
+Queue-stage coverage & 29 reviewed / 0 pending & count & Submitted with/without matched review \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The workflow profile shows measurable post-implementation status transitions and review records. The elapsed durations represent end-to-end workflow-stage timing under operational workload and should not be interpreted as interface response latency.
+
+\subsection{Compliance and Governance Profile}
+\begin{table}[htbp]
+\caption{Compliance and Governance Outcomes}
+\centering
+\begin{tabular}{p{2.65cm}p{1.45cm}p{2.35cm}}
+\toprule
+Indicator & Value & Notes \\
+\midrule
+Complete submissions & 17.90\% & 29/162 \\
+Incomplete submissions & 82.10\% & 133/162 (draft) \\
+Rejected among complete & 24.14\% & 7/29 \\
+Resubmission count $>$ 0 & 0.00\% & Not observed \\
+Role-based access & Implemented & Role-scoped routes/actions \\
+Traceability readiness & Partial & Audit logs unavailable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Usability and Acceptance}
+\begin{table}[htbp]
+\caption{Usability and TAM Outcomes}
+\centering
+\begin{tabular}{lccp{1.6cm}}
+\toprule
+Construct & Mean & SD & Interpretation \\
+\midrule
+SUS overall & 62.00 & 2.25 & Marginal/Acceptable \\
+PU & 4.17 & 0.30 & Acceptable \\
+PEOU & 4.17 & 0.17 & Acceptable \\
+BI & 4.26 & 0.21 & Highly Acceptable \\
+Overall TAM (PU+PEOU+BI) & 4.19 & 0.20 & Acceptable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Reliability Interpretation}
+\begin{table}[htbp]
+\caption{Reliability Summary}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Scale & Alpha & Interpretation \\
+\midrule
+PU & 0.896 & Good \\
+TAM (PU+PEOU+BI) & 0.781 & Acceptable (primary evidence) \\
+Other subscales (WI, CS, RT, GT, PEOU, BI) & low/negative & Exploratory in this cycle \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Reliability framing for reviewers:
+\begin{enumerate}
+    \item Acceptance-related reliability claims are anchored on combined TAM alpha (0.781).
+    \item Low/negative-alpha subscales are treated as exploratory/descriptive only.
+    \item Next-cycle refinement should apply item-total diagnostics, alpha-if-item-deleted checks, reverse-coded verification, and revalidation with a larger role-balanced sample.
+\end{enumerate}
+
+\subsection{Visualizations}
+Figures~\ref{fig:workflow_arch} to \ref{fig:results_flow} summarize the implemented FPMS workflow, status distribution, timing profiles, construct means, and integrated evidence flow used in the interpretation of findings.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{fig01_fpms_workflow_architecture.png}
+\caption{FPMS Role-Based Workflow Architecture}
+\label{fig:workflow_arch}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig02_fpms_status_distribution.png}
+\caption{Portfolio Status Distribution (Draft, Approved, Rejected)}
+\label{fig:status_dist}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig03_fpms_processing_time_boxplot.png}
+\caption{Processing Duration Distribution (Created-to-Submitted)}
+\label{fig:processing_box}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig04_fpms_review_turnaround_boxplot.png}
+\caption{Review Turnaround Distribution (Submitted-to-Decision)}
+\label{fig:review_box}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig05_fpms_construct_means.png}
+\caption{Construct Means (WI, CS, RT, GT, SUS, PU, PEOU, BI)}
+\label{fig:construct_means}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\linewidth]{fig06_fpms_results_flow.png}
+\caption{Results Flow: Operational Logs and Survey to Findings}
+\label{fig:results_flow}
+\end{figure}
+
+\section{Conclusion}
+The developed FPMS provides a deployable governance-oriented platform for faculty compliance workflows. The post-implementation profile demonstrates measurable workflow, completeness, and review-turnaround indicators, together with positive acceptance outcomes. Reliability-supported acceptance claims are strongest at the combined TAM level, while low-alpha subscale findings remain exploratory. Future cycles should prioritize instrument refinement and expanded multi-role sampling, and enable complete action-level audit logging for fuller governance evidence.
+
+\section*{Acknowledgment}
+The authors express sincere gratitude to the Polytechnic University of the Philippines for providing the academic environment and institutional support that made this research possible. We are especially thankful to the departments and stakeholders who supported the implementation and evaluation of the Faculty Portfolio Management System in an actual institutional setting. Their participation and feedback contributed significantly to the quality of the study and the practical insights derived from the post-implementation analysis. We also acknowledge all colleagues and collaborators who supported the completion of this work.
+
+\printbibliography
+
+\end{document}

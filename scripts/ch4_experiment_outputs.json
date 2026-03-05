@@ -1,0 +1,80 @@
+{
+  "dataset_counts": {
+    "total_records": 143,
+    "train_records": 100,
+    "test_records": 43,
+    "feature_count": 99,
+    "numeric_feature_count": 13,
+    "at_risk_count_total": 119,
+    "not_at_risk_count_total": 24,
+    "at_risk_count_train": 83,
+    "at_risk_count_test": 36
+  },
+  "models": {
+    "Logistic Regression": {
+      "accuracy": 0.9767441860465116,
+      "precision": 1.0,
+      "recall": 0.9722222222222222,
+      "f1": 0.9859154929577464,
+      "brier": 0.03423050094089276,
+      "confusion_matrix": {
+        "tn": 7,
+        "fp": 0,
+        "fn": 1,
+        "tp": 35
+      },
+      "roc_auc": 1.0,
+      "pr_auc": 1.0
+    },
+    "Random Forest": {
+      "accuracy": 0.9534883720930233,
+      "precision": 0.9473684210526315,
+      "recall": 1.0,
+      "f1": 0.972972972972973,
+      "brier": 0.033464193687224995,
+      "confusion_matrix": {
+        "tn": 5,
+        "fp": 2,
+        "fn": 0,
+        "tp": 36
+      },
+      "roc_auc": 1.0,
+      "pr_auc": 1.0
+    },
+    "Gradient Boosting": {
+      "accuracy": 0.9534883720930233,
+      "precision": 0.9473684210526315,
+      "recall": 1.0,
+      "f1": 0.972972972972973,
+      "brier": 0.04563771665321933,
+      "confusion_matrix": {
+        "tn": 5,
+        "fp": 2,
+        "fn": 0,
+        "tp": 36
+      },
+      "roc_auc": 0.8571428571428571,
+      "pr_auc": 0.984981572206567
+    }
+  },
+  "mcnemar": {
+    "LR_vs_RF": {
+      "b": 2,
+      "c": 1,
+      "chi2": 0.0,
+      "p_value": 1.0
+    },
+    "LR_vs_GB": {
+      "b": 2,
+      "c": 1,
+      "chi2": 0.0,
+      "p_value": 1.0
+    },
+    "RF_vs_GB": {
+      "b": 0,
+      "c": 0,
+      "chi2": 0.0,
+      "p_value": 1.0
+    }
+  }
+}

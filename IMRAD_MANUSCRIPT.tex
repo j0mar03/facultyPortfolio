@@ -1,0 +1,179 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{url}
+\graphicspath{{figures/}}
+
+\title{Machine Learning-Based Early Warning System for Predicting Late or Incomplete Faculty Portfolio Submissions in a Web-Based Faculty Portfolio Management System}
+
+\author{
+\IEEEauthorblockN{Author Name}
+\IEEEauthorblockA{
+Department / Institution \\
+City, Country \\
+email@domain.com
+}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This study developed and evaluated a machine learning-based early warning system for predicting late or incomplete faculty portfolio submissions in a web-based Faculty Portfolio Management System. Using institutional historical records, a supervised binary classification dataset was prepared with target classes At-Risk (1) and Not At-Risk (0). The final dataset contained 143 eligible records (119 At-Risk, 24 Not At-Risk) and was evaluated using a time-aware split (100 training, 43 test). Three models were compared: Logistic Regression, Random Forest, and Gradient Boosting. Logistic Regression achieved the highest accuracy (97.67\%) and F1-score (98.59\%), while Random Forest and Gradient Boosting achieved 100.00\% recall. Random Forest produced the best probability reliability with the lowest Brier score (0.0335). Pairwise McNemar tests indicated no statistically significant differences among model errors at $\alpha=0.05$ (all $p=1.000000$). For deployment-oriented early warning, Random Forest was selected because it combined zero false negatives with best calibration reliability.
+\end{abstract}
+
+\begin{IEEEkeywords}
+machine learning, early warning system, faculty portfolio submission, risk prediction, random forest, calibration, McNemar test
+\end{IEEEkeywords}
+
+\section{Introduction}
+Higher education institutions commonly require faculty members to submit portfolio documents (e.g., syllabi, instructional materials, and assessment artifacts) for monitoring and compliance. In many contexts, monitoring remains manual and reactive, causing delayed identification of at-risk submissions.
+
+This study addresses that gap by developing a machine learning-based early warning system integrated with a Faculty Portfolio Management System. The study seeks to answer: (1) what factors are associated with submission risk, (2) whether machine learning can predict at-risk submissions accurately, (3) which model performs best, (4) how outputs support system integration, and (5) whether model differences are statistically significant.
+
+\subsection{Related Work Context}
+Prior literature shows strong evidence for early warning analytics in student outcomes and compliance-related prediction settings, with frequent use of Logistic Regression, Random Forest, Support Vector Machines, and Gradient Boosting families. However, direct deployment-oriented modeling for faculty portfolio submission compliance remains limited. This study contributes institution-specific evidence for that use case and reports both discrimination and calibration metrics.
+
+\section{Methods}
+\subsection{Research Design}
+The study used a quantitative predictive design with a deployment-oriented system integration perspective.
+
+\subsection{Data Source and Unit of Analysis}
+Data were extracted from institutional Faculty Portfolio Management System records. The unit of analysis was a faculty-class offering portfolio instance.
+
+\subsection{Target Label and Features}
+The target variable was binary submission risk status: At-Risk (1) versus Not At-Risk (0). Feature groups included portfolio behavior indicators, completeness proxies, required artifact indicators, and class offering context variables.
+
+\subsection{Data Preparation and Split}
+Data preparation included cleaning, feature construction, encoding, and scaling where appropriate. A time-aware split was used so older records formed training data and newer records formed test data.
+
+\subsection{Models and Evaluation}
+Three supervised models were evaluated: Logistic Regression, Random Forest, and Gradient Boosting. Performance metrics were Accuracy, Precision, Recall, F1-score, ROC-AUC, PR-AUC, confusion matrix counts, and Brier score. Pairwise McNemar tests were used for statistical comparison at $\alpha=0.05$.
+
+\section{Results and Discussion}
+\subsection{Dataset Profile}
+\begin{table}[htbp]
+\caption{Dataset Profile}
+\centering
+\begin{tabular}{lc}
+\toprule
+Component & Value \\
+\midrule
+Total records & 143 \\
+Training records & 100 \\
+Test records & 43 \\
+Features used & 99 \\
+At-Risk count & 119 (83.22\%) \\
+Not At-Risk count & 24 (16.78\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Model Performance}
+\begin{table*}[htbp]
+\caption{Test-Set Performance Metrics}
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+Model & Accuracy & Precision & Recall & F1-score & ROC-AUC & PR-AUC & Brier \\
+\midrule
+Logistic Regression & 97.67\% & 100.00\% & 97.22\% & 98.59\% & 1.0000 & 1.0000 & 0.0342 \\
+Random Forest & 95.35\% & 94.74\% & 100.00\% & 97.30\% & 1.0000 & 1.0000 & 0.0335 \\
+Gradient Boosting & 95.35\% & 94.74\% & 100.00\% & 97.30\% & 0.8571 & 0.9850 & 0.0456 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Confusion Matrix Summary}
+\begin{table}[htbp]
+\caption{Confusion Matrix Counts (Test Set)}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Model & TN & FP & FN & TP \\
+\midrule
+Logistic Regression & 7 & 0 & 1 & 35 \\
+Random Forest & 5 & 2 & 0 & 36 \\
+Gradient Boosting & 5 & 2 & 0 & 36 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical Comparison}
+\begin{table}[htbp]
+\caption{McNemar Pairwise Tests}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Pair & b & c & $\chi^2$ & p-value \\
+\midrule
+LR vs RF & 2 & 1 & 0.0000 & 1.000000 \\
+LR vs GB & 2 & 1 & 0.0000 & 1.000000 \\
+RF vs GB & 0 & 0 & 0.0000 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All pairwise results failed to reject the null hypothesis at $\alpha=0.05$, indicating no statistically significant difference among model errors on the current test set. For operational early warning, Random Forest was selected due to perfect recall and the best Brier score.
+
+\subsection{Chapter Figures}
+Upload all diagram images to the Overleaf folder \texttt{figures/} using the exact filenames below.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{fig01_ch4_experimental_pipeline.png}
+\caption{Chapter IV Experimental Pipeline}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\linewidth]{fig02_ch4_class_distribution.png}
+\caption{Class Distribution of Final Dataset}
+\label{fig:classdist}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig03_ch4_accuracy_comparison.png}
+\caption{Test-Set Accuracy Comparison}
+\label{fig:accuracy}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig04_ch4_recall_fn_tradeoff.png}
+\caption{Recall and False Negative Trade-off}
+\label{fig:recallfn}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig05_ch4_brier_reliability.png}
+\caption{Brier Score (Calibration Reliability)}
+\label{fig:brier}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{fig06_ch4_mcnemar_results.png}
+\caption{McNemar Pairwise Significance Results}
+\label{fig:mcnemar}
+\end{figure}
+
+\section{Conclusion}
+This study shows that machine learning can effectively support early identification of at-risk faculty portfolio submissions using institutional historical data. Across three candidate models, all achieved high predictive performance. Logistic Regression led in accuracy and F1-score, while Random Forest delivered perfect recall and the best calibration reliability. McNemar tests indicated no statistically significant pairwise differences in model errors. For deployment in an early warning workflow, Random Forest is recommended because minimizing false negatives is operationally critical.
+
+\section*{Acknowledgment}
+Optional: Add institutional support, adviser, or funding acknowledgment here.
+
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

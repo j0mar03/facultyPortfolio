@@ -33,12 +33,12 @@ services:
     image: mysql:8.0
     container_name: facultyportfolio-db
     ports:
-      - "3307:3306"
+      - "${DB_BIND_HOST:-127.0.0.1}:${DB_PORT_FORWARD:-3307}:3306"
     environment:
-      - MYSQL_DATABASE=faculty_portfolio
-      - MYSQL_USER=faculty
-      - MYSQL_PASSWORD=faculty
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=${DB_DATABASE:-faculty_portfolio}
+      - MYSQL_USER=${DB_USERNAME:-faculty}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-change-me}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-change-root-password}
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - db-data:/var/lib/mysql
@@ -46,5 +46,3 @@ services:
 volumes:
   db-data:
   composer-cache:
-
-
