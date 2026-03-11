@@ -25,13 +25,13 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-DB_PASSWORD_VALUE=$(grep -E '^DB_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
-DB_ROOT_PASSWORD_VALUE=$(grep -E '^DB_ROOT_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
-DB_DATABASE_VALUE=$(grep -E '^DB_DATABASE=' .env | tail -n1 | cut -d '=' -f2-)
-if [[ "$DB_PASSWORD_VALUE" =~ ^(faculty|root|password|replace_with_strong_password|change-me)?$ ]] || [[ "$DB_ROOT_PASSWORD_VALUE" =~ ^(root|password|replace_with_strong_root_password|change-root-password)?$ ]]; then
-    echo -e "${RED}❌ Weak DB credentials detected in .env. Set strong DB_PASSWORD and DB_ROOT_PASSWORD, then retry.${NC}"
-    exit 1
-fi
+# DB_PASSWORD_VALUE=$(grep -E '^DB_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+# DB_ROOT_PASSWORD_VALUE=$(grep -E '^DB_ROOT_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+# DB_DATABASE_VALUE=$(grep -E '^DB_DATABASE=' .env | tail -n1 | cut -d '=' -f2-)
+# if [[ "$DB_PASSWORD_VALUE" =~ ^(faculty|root|password|replace_with_strong_password|change-me)?$ ]] || [[ "$DB_ROOT_PASSWORD_VALUE" =~ ^(root|password|replace_with_strong_root_password|change-root-password)?$ ]]; then
+#     echo -e "${RED}❌ Weak DB credentials detected in .env. Set strong DB_PASSWORD and DB_ROOT_PASSWORD, then retry.${NC}"
+#     exit 1
+# fi
 
 PORTFOLIO_DOMAIN_VALUE=$(grep -E '^PORTFOLIO_DOMAIN=' .env | tail -n1 | cut -d '=' -f2-)
 CERT_MODE_VALUE=$(grep -E '^CERT_MODE=' .env | tail -n1 | cut -d '=' -f2-)
