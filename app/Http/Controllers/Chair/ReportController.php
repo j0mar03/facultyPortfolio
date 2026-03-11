@@ -208,4 +208,104 @@ class ReportController extends Controller
         // Download and then delete the temp file
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
+
+    public function compliance(Request $request): View
+    {
+        abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
+
+        $user = Auth::user();
+        $managedCourses = $user->managedCourses;
+        if ($managedCourses->isEmpty() && $user->course_id) {
+            $managedCourses = \App\Models\Course::where('id', $user->course_id)->get();
+        }
+        abort_unless($managedCourses->isNotEmpty(), 403, 'No course assigned');
+
+        $selectedCourseId = $request->get('course_id', $managedCourses->first()->id);
+        $selectedCourse = $managedCourses->firstWhere('id', $selectedCourseId);
+        abort_unless($selectedCourse, 403);
+
+        $availableYears = \App\Models\ClassOffering::whereHas('subject', function($query) use ($selectedCourse) {
+            $query->where('course_id', $selectedCourse->id);
+        })->distinct()->pluck('academic_year')->sortDesc();
+
+        $selectedYear = $request->get('academic_year', $availableYears->first());
+
+        $availableTerms = \App\Models\ClassOffering::whereHas('subject', function($query) use ($selectedCourse) {
+            $query->where('course_id', $selectedCourse->id);
+        })->where('academic_year', $selectedYear)
+          ->distinct()->pluck('term')->sort();
+
+        $selectedTerm = $request->get('term', $availableTerms->first());
+
+        // Get subjects that REQUIRE portfolios for this course and term
+        $subjectsQuery = \App\Models\Subject::where('course_id', $selectedCourse->id);
+        if ($selectedTerm) {
+            $subjectsQuery->where('term', $selectedTerm);
+        }
+
+        $allSubjects = $subjectsQuery->orderBy('year_level')->orderBy('code')->get();
+        
+        // Filter subjects based on requiresPortfolio() method
+        $subjects = $allSubjects->filter->requiresPortfolio();
+
+        $subjects->load(['classOfferings' => function ($query) use ($selectedYear, $selectedTerm) {
+            $query->where('academic_year', $selectedYear);
+            if ($selectedTerm) {
+                $query->where('term', $selectedTerm);
+            }
+            $query->with(['faculty', 'portfolio.items']);
+        }]);
+
+        // Calculate Compliance Summary Stats (Before grouping)
+        $stats = [
+            'approved' => 0,
+            'in_progress' => 0,
+            'not_started' => 0,
+            'total' => $subjects->count()
+        ];
+
+        foreach ($subjects as $subject) {
+            $hasApproved = false;
+            $hasInProgress = false;
+            
+            foreach ($subject->classOfferings as $offering) {
+                if ($offering->portfolio) {
+                    if ($offering->portfolio->status === 'approved') {
+                        $hasApproved = true;
+                    } else {
+                        $hasInProgress = true;
+                    }
+                }
+            }
+
+            if ($hasApproved) {
+                $stats['approved']++;
+            } elseif ($hasInProgress) {
+                $stats['in_progress']++;
+            } else {
+                $stats['not_started']++;
+            }
+        }
+
+        // Now group subjects for the view
+        $groupedSubjects = $subjects->groupBy(function ($subject) {
+            return "Year {$subject->year_level} - Term {$subject->term}";
+        });
+
+        $requiredItems = config('portfolio.required_items', []);
+        $itemTypes = config('portfolio.item_types', []);
+
+        return view('chair.reports.compliance', [
+            'subjects' => $groupedSubjects,
+            'managedCourses' => $managedCourses,
+            'selectedCourse' => $selectedCourse,
+            'availableYears' => $availableYears,
+            'selectedYear' => $selectedYear,
+            'availableTerms' => $availableTerms,
+            'selectedTerm' => $selectedTerm,
+            'requiredItems' => $requiredItems,
+            'itemTypes' => $itemTypes,
+            'stats' => $stats
+        ]);
+    }
 }

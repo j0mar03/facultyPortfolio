@@ -100,6 +100,8 @@ Route::middleware([
         // Reports routes
         Route::get('/reports', [\App\Http\Controllers\Chair\ReportController::class, 'index'])
             ->name('reports.index');
+        Route::get('/reports/compliance', [\App\Http\Controllers\Chair\ReportController::class, 'compliance'])
+            ->name('reports.compliance');
         Route::get('/reports/download-all', [\App\Http\Controllers\Chair\ReportController::class, 'downloadAll'])
             ->name('reports.download-all');
 

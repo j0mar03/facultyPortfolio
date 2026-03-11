@@ -15,19 +15,23 @@ class SubjectController extends Controller
 {
     public function index(Request $request): View
     {
-        abort_unless(Auth::user()->role === 'chair', 403);
+        abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
 
         $chair = Auth::user();
 
-        // Get all courses this chair manages
+        // Get all courses this user manages (or all if admin/auditor)
         $managedCourses = $chair->managedCourses;
 
-        // For backward compatibility, if no managed courses, use the old course_id
-        if ($managedCourses->isEmpty() && $chair->course_id) {
-            $managedCourses = \App\Models\Course::where('id', $chair->course_id)->get();
+        // For backward compatibility
+        if ($managedCourses->isEmpty()) {
+            if ($chair->role === 'chair' && $chair->course_id) {
+                $managedCourses = \App\Models\Course::where('id', $chair->course_id)->get();
+            } elseif (in_array($chair->role, ['admin', 'auditor'])) {
+                $managedCourses = \App\Models\Course::all();
+            }
         }
 
-        abort_unless($managedCourses->isNotEmpty(), 403, 'No course assigned to this chair');
+        abort_unless($managedCourses->isNotEmpty(), 403, 'No course assigned or available');
 
         // Get selected course or default to first managed course
         $selectedCourseId = $request->get('course_id', $managedCourses->first()->id);
@@ -98,15 +102,16 @@ class SubjectController extends Controller
     public function show(Request $request, Subject $subject): View
     {
         $user = Auth::user();
-        abort_unless($user->role === 'chair', 403);
+        abort_unless(in_array($user->role, ['chair', 'admin', 'auditor']), 403);
 
-        // Check if chair manages this course (support many-to-many relationship)
-        $managesCourse = $user->managedCourses->contains($subject->course_id);
-        if (!$managesCourse && $user->course_id) {
+        // Check if user manages this course or has broad access
+        $hasAccess = in_array($user->role, ['admin', 'auditor']) || $user->managedCourses->contains($subject->course_id);
+        
+        if (!$hasAccess && $user->role === 'chair' && $user->course_id) {
             // Fallback to old single course_id field
-            $managesCourse = $user->course_id === $subject->course_id;
+            $hasAccess = $user->course_id === $subject->course_id;
         }
-        abort_unless($managesCourse, 403, 'You do not manage this course');
+        abort_unless($hasAccess, 403, 'You do not have access to this course');
 
         $subject->load(['classOfferings.faculty', 'classOfferings.portfolio.items', 'classOfferings.portfolio.classOffering']);
 

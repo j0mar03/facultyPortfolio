@@ -62,5 +62,5 @@ return [
     | Subjects starting with these prefixes do not require a portfolio.
     |
     */
-    'excluded_subject_prefixes' => ['GEED', 'NSTP', 'PATHFIT'],
+    'excluded_subject_prefixes' => ['GEED', 'NSTP', 'PATHFIT', 'CHEM', 'MATH'],
 ];

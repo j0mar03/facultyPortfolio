@@ -33,12 +33,15 @@
                         $isChair = $userRole === 'chair';
                     @endphp
 
-                    @if($isChair)
+                    @if($isChair || $userRole === 'auditor')
                         <x-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                             {{ __('Subjects') }}
                         </x-nav-link>
-                        <x-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.*')">
+                        <x-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.index')">
                             {{ __('Reports') }}
+                        </x-nav-link>
+                        <x-nav-link href="{{ route('chair.reports.compliance') }}" :active="request()->routeIs('chair.reports.compliance')">
+                            {{ __('Compliance') }}
                         </x-nav-link>
                     @endif
 
@@ -188,16 +191,19 @@
             @endif
 
             @php
-                $userRoleResponsive = Auth::user()->role ?? '';
-                $isChairResponsive = $userRoleResponsive === 'chair';
+                $userRoleResp = Auth::user()->role ?? '';
+                $isChairResp = $userRoleResp === 'chair';
             @endphp
 
-            @if($isChairResponsive)
+            @if($isChairResp || $userRoleResp === 'auditor')
                 <x-responsive-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                     {{ __('Subjects') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.*')">
+                <x-responsive-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.index')">
                     {{ __('Reports') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('chair.reports.compliance') }}" :active="request()->routeIs('chair.reports.compliance')">
+                    {{ __('Compliance') }}
                 </x-responsive-nav-link>
             @endif
 
