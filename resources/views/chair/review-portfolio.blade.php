@@ -2,14 +2,42 @@
 	<x-slot name="header">
 		<div class="flex justify-between items-center">
 			<h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-				{{ __('Review Portfolio') }}
+				@if($portfolio->status === 'draft')
+					{{ __('Monitor Draft Portfolio') }}
+				@else
+					{{ __('Review Portfolio') }}
+				@endif
 			</h2>
-			<a href="{{ route('reviews.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Queue</a>
+			<a href="{{ url()->previous() == route('reviews.index') ? route('reviews.index') : route('chair.reports.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back</a>
 		</div>
 	</x-slot>
 
 	<div class="py-12">
 		<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+			{{-- Monitoring Notice --}}
+			@if($portfolio->status === 'draft' || $portfolio->status === 'rejected')
+				<div class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4 shadow-sm sm:rounded-r-lg">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							<svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+							</svg>
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-yellow-700 dark:text-yellow-300">
+								<strong>Monitoring Mode:</strong> 
+								@if($portfolio->status === 'draft')
+									This portfolio is still a <strong>Draft</strong> and hasn't been submitted by the faculty. 
+								@else
+									This portfolio was <strong>Rejected</strong> and is being revised.
+								@endif
+								You can view the documents to monitor progress, but you cannot make a final decision until it is submitted.
+							</p>
+						</div>
+					</div>
+				</div>
+			@endif
+
 			{{-- Portfolio Info --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -50,8 +78,8 @@
 								<dd class="text-sm text-gray-900 dark:text-gray-100">{{ $portfolio->classOffering->section }}</dd>
 							</div>
 							<div>
-								<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</dt>
-								<dd class="text-sm text-gray-900 dark:text-gray-100">{{ $portfolio->submitted_at->format('M d, Y h:i A') }}</dd>
+								<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+								<dd class="text-sm text-gray-900 dark:text-gray-100">{{ $portfolio->updated_at->format('M d, Y h:i A') }}</dd>
 							</div>
 							<div>
 								<dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
@@ -59,7 +87,7 @@
 									<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium
 										{{ $portfolio->status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
 										   ($portfolio->status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
-										   'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100') }}">
+										   ($portfolio->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' : 'bg-gray-100 text-gray-800')) }}">
 										{{ ucfirst($portfolio->status) }}
 									</span>
 								</dd>

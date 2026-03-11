@@ -22,44 +22,35 @@ class ReportController extends Controller
         // Get all courses this chair manages
         $managedCourses = $user->managedCourses;
 
-        // For backward compatibility, if no managed courses, use the old course_id
+        // For backward compatibility
         if ($managedCourses->isEmpty() && $user->course_id) {
             $managedCourses = \App\Models\Course::where('id', $user->course_id)->get();
         }
 
         abort_unless($managedCourses->isNotEmpty(), 403, 'No course assigned to this chair');
 
-        // Get selected course or default to first managed course
+        // Get selected course
         $selectedCourseId = $request->get('course_id', $managedCourses->first()->id);
         $selectedCourse = $managedCourses->firstWhere('id', $selectedCourseId);
 
         abort_unless($selectedCourse, 403, 'Invalid course selection');
 
-        // Get all available academic years from class offerings (not just approved portfolios)
-        $availableYears = \App\Models\ClassOffering::whereHas('subject', function ($query) use ($selectedCourse) {
-                $query->where('course_id', $selectedCourse->id);
-            })
-            ->distinct()
-            ->pluck('academic_year')
-            ->sort()
-            ->values();
+        // Available filtering options (Years/Terms for this course)
+        $availableYears = \App\Models\ClassOffering::whereHas('subject', function($query) use ($selectedCourse) {
+            $query->where('course_id', $selectedCourse->id);
+        })->distinct()->pluck('academic_year')->sortDesc();
 
-        // If no years exist, add 2024-2025 as default
-        if ($availableYears->isEmpty()) {
-            $availableYears = collect(['2024-2025']);
-        }
+        $selectedYear = $request->get('academic_year', $availableYears->first());
 
-        // Select year: use request value if provided and valid; otherwise pick the earliest available
-        $requestedYear = $request->get('academic_year');
-        if ($requestedYear && $availableYears->contains($requestedYear)) {
-            $selectedYear = $requestedYear;
-        } else {
-            // fallback to earliest available year (or 2024-2025)
-            $selectedYear = $availableYears->first() ?? '2024-2025';
-        }
+        $availableTerms = \App\Models\ClassOffering::whereHas('subject', function($query) use ($selectedCourse) {
+            $query->where('course_id', $selectedCourse->id);
+        })->where('academic_year', $selectedYear)
+          ->distinct()->pluck('term')->sort();
 
-        // Get all approved portfolios for the selected course and academic year
-        $portfolios = Portfolio::with([
+        $selectedTerm = $request->get('term');
+
+        // Base query for portfolios in this course and year/term
+        $baseQuery = Portfolio::with([
                 'user',
                 'classOffering.subject.course',
                 'classOffering.faculty',
@@ -69,19 +60,38 @@ class ReportController extends Controller
             ->whereHas('classOffering.subject', function ($query) use ($selectedCourse) {
                 $query->where('course_id', $selectedCourse->id);
             })
-            ->whereHas('classOffering', function ($query) use ($selectedYear) {
+            ->whereHas('classOffering', function ($query) use ($selectedYear, $selectedTerm) {
                 $query->where('academic_year', $selectedYear);
-            })
-            ->where('status', 'approved')
+                if ($selectedTerm) {
+                    $query->where('term', $selectedTerm);
+                }
+            });
+
+        // 1. Approved Portfolios (Finalized)
+        $approvedPortfolios = (clone $baseQuery)->where('status', 'approved')
             ->orderBy('approved_at', 'desc')
-            ->paginate(20);
+            ->paginate(15, ['*'], 'approved_page');
+
+        // 2. In Progress Portfolios (Monitoring Mode)
+        $inProgressPortfolios = (clone $baseQuery)->whereIn('status', ['draft', 'rejected', 'submitted'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(15, ['*'], 'progress_page');
+
+        // Statistics
+        $totalApproved = (clone $baseQuery)->where('status', 'approved')->count();
+        $totalInProgress = (clone $baseQuery)->whereIn('status', ['draft', 'rejected', 'submitted'])->count();
 
         return view('chair.reports.index', compact(
-            'portfolios',
+            'approvedPortfolios',
+            'inProgressPortfolios',
+            'totalApproved',
+            'totalInProgress',
             'managedCourses',
             'selectedCourse',
             'availableYears',
-            'selectedYear'
+            'selectedYear',
+            'availableTerms',
+            'selectedTerm'
         ));
     }
 

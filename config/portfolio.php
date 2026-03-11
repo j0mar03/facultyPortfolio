@@ -53,4 +53,14 @@ return [
     */
     'max_file_size' => 10240, // in KB (10MB)
     'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'zip'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Excluded Subject Prefixes
+    |--------------------------------------------------------------------------
+    |
+    | Subjects starting with these prefixes do not require a portfolio.
+    |
+    */
+    'excluded_subject_prefixes' => ['GEED', 'NSTP', 'PATHFIT'],
 ];

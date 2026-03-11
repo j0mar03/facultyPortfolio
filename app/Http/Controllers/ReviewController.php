@@ -44,7 +44,7 @@ class ReviewController extends Controller
 
     public function show(Portfolio $portfolio): View
     {
-        // Only chairs and admins can review
+        // Only chairs, admins, and auditors can review/monitor
         abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
 
         $user = Auth::user();

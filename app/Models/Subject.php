@@ -35,6 +35,22 @@ class Subject extends Model
     {
         return $this->hasMany(ClassOffering::class);
     }
+
+    /**
+     * Determine if this subject requires a portfolio based on its code prefix.
+     */
+    public function requiresPortfolio(): bool
+    {
+        $excludedPrefixes = config('portfolio.excluded_subject_prefixes', []);
+        
+        foreach ($excludedPrefixes as $prefix) {
+            if (str_starts_with(strtoupper($this->code), strtoupper($prefix))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 

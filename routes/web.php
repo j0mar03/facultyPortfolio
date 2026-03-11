@@ -102,6 +102,10 @@ Route::middleware([
             ->name('reports.index');
         Route::get('/reports/download-all', [\App\Http\Controllers\Chair\ReportController::class, 'downloadAll'])
             ->name('reports.download-all');
+
+        // Reminders
+        Route::post('/reminders', [\App\Http\Controllers\Chair\ReminderController::class, 'store'])
+            ->name('reminders.store');
     });
 
     // Admin routes
