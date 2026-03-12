@@ -107,36 +107,15 @@
 
 			{{-- Document Completion Progress --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Document Completion Progress</h3>
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Document Completion Progress</h3>
+					<a href="{{ route('faculty.compliance') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold uppercase tracking-widest">
+						View Full Matrix →
+					</a>
+				</div>
 
 				@if(count($documentStats) > 0)
-					<div class="space-y-4">
-						@foreach($documentStats as $stat)
-							<div>
-								<div class="flex justify-between items-center mb-2">
-									<div>
-										<span class="font-medium text-gray-900 dark:text-gray-100">
-											{{ $stat['offering']->subject->code }} - {{ $stat['offering']->subject->title }}
-										</span>
-										<span class="text-sm text-gray-500 dark:text-gray-400 ml-2">
-											({{ $stat['offering']->academic_year }}, T{{ $stat['offering']->term }}, Sec {{ $stat['offering']->section }})
-										</span>
-									</div>
-									<div class="flex items-center gap-2">
-										<span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-											{{ $stat['completed'] }}/{{ $stat['total'] }} documents
-										</span>
-										<span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-											{{ number_format($stat['percentage'], 0) }}%
-										</span>
-									</div>
-								</div>
-								<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-									<div class="bg-indigo-600 h-3 rounded-full transition-all" style="width: {{ min($stat['percentage'], 100) }}%"></div>
-								</div>
-							</div>
-						@endforeach
-					</div>
+...
 				@else
 					<p class="text-center text-gray-500 dark:text-gray-400 py-8">No portfolios created yet.</p>
 				@endif

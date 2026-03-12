@@ -16,9 +16,12 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if(Auth::user()->role ?? '' === 'faculty')
+                    @if(in_array(Auth::user()->role ?? '', ['faculty', 'chair']))
                         <x-nav-link href="{{ route('faculty.class-offerings') }}" :active="request()->routeIs('faculty.class-offerings')">
                             {{ __('My Class Offerings') }}
+                        </x-nav-link>
+                        <x-nav-link href="{{ route('faculty.compliance') }}" :active="request()->routeIs('faculty.compliance')">
+                            {{ __('My Compliance') }}
                         </x-nav-link>
                     @endif
 
@@ -178,9 +181,12 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            @if(Auth::user()->role ?? '' === 'faculty')
+            @if(in_array(Auth::user()->role ?? '', ['faculty', 'chair']))
                 <x-responsive-nav-link href="{{ route('faculty.class-offerings') }}" :active="request()->routeIs('faculty.class-offerings')">
                     {{ __('My Class Offerings') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('faculty.compliance') }}" :active="request()->routeIs('faculty.compliance')">
+                    {{ __('My Compliance') }}
                 </x-responsive-nav-link>
             @endif
 

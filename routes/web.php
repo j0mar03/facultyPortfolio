@@ -31,6 +31,9 @@ Route::middleware([
         return view('faculty.class-offerings');
     })->name('faculty.class-offerings');
 
+    Route::get('/faculty/compliance', [\App\Http\Controllers\Faculty\DashboardController::class, 'compliance'])
+        ->name('faculty.compliance');
+
     Route::resource('portfolios', \App\Http\Controllers\PortfolioController::class)
         ->only(['index', 'store', 'show']);
 
