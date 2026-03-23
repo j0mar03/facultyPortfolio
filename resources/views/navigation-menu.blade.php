@@ -40,11 +40,16 @@
                         <x-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                             {{ __('Subjects') }}
                         </x-nav-link>
-                        <x-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.index')">
+                        <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.index')">
                             {{ __('Reports') }}
                         </x-nav-link>
-                        <x-nav-link href="{{ route('chair.reports.compliance') }}" :active="request()->routeIs('chair.reports.compliance')">
+
+                        <x-nav-link href="{{ route('reports.compliance') }}" :active="request()->routeIs('reports.compliance')">
                             {{ __('Compliance') }}
+                        </x-nav-link>
+
+                        <x-nav-link href="{{ route('reports.activity') }}" :active="request()->routeIs('reports.activity')">
+                            {{ __('Activity') }}
                         </x-nav-link>
                     @endif
 
@@ -205,10 +210,10 @@
                 <x-responsive-nav-link href="{{ route('chair.subjects.index') }}" :active="request()->routeIs('chair.subjects.*')">
                     {{ __('Subjects') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('chair.reports.index') }}" :active="request()->routeIs('chair.reports.index')">
+                <x-responsive-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.index')">
                     {{ __('Reports') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('chair.reports.compliance') }}" :active="request()->routeIs('chair.reports.compliance')">
+                <x-responsive-nav-link href="{{ route('reports.compliance') }}" :active="request()->routeIs('reports.compliance')">
                     {{ __('Compliance') }}
                 </x-responsive-nav-link>
             @endif

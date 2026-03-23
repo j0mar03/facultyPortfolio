@@ -21,7 +21,7 @@
 				<div class="border-b border-gray-200 dark:border-gray-700">
 					<nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
 						@foreach($managedCourses as $course)
-							<a href="{{ route('chair.reports.compliance', ['course_id' => $course->id, 'academic_year' => $selectedYear, 'term' => $selectedTerm]) }}"
+							<a href="{{ route('reports.compliance', ['course_id' => $course->id, 'academic_year' => $selectedYear, 'term' => $selectedTerm]) }}"
 							   class="@if($course->id === $selectedCourse->id) border-indigo-500 text-indigo-600 dark:text-indigo-400 @else border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
 								{{ $course->code }}
 							</a>
@@ -55,7 +55,7 @@
 
 			{{-- Filters --}}
 			<div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 print:hidden">
-				<form method="GET" action="{{ route('chair.reports.compliance') }}" class="flex items-center gap-6 flex-wrap">
+				<form method="GET" action="{{ route('reports.compliance') }}" class="flex items-center gap-6 flex-wrap">
 					<input type="hidden" name="course_id" value="{{ $selectedCourse->id }}">
 					
 					<div class="flex items-center gap-2">

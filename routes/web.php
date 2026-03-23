@@ -100,17 +100,21 @@ Route::middleware([
         Route::get('/subjects/documents/{classOffering}/{type}', [\App\Http\Controllers\Chair\SubjectController::class, 'downloadDocument'])
             ->name('subjects.download-document');
 
-        // Reports routes
-        Route::get('/reports', [\App\Http\Controllers\Chair\ReportController::class, 'index'])
-            ->name('reports.index');
-        Route::get('/reports/compliance', [\App\Http\Controllers\Chair\ReportController::class, 'compliance'])
-            ->name('reports.compliance');
-        Route::get('/reports/download-all', [\App\Http\Controllers\Chair\ReportController::class, 'downloadAll'])
-            ->name('reports.download-all');
-
         // Reminders
         Route::post('/reminders', [\App\Http\Controllers\Chair\ReminderController::class, 'store'])
             ->name('reminders.store');
+    });
+
+    // Reports routes (Accessible by Chairs and Admins)
+    Route::name('reports.')->group(function () {
+        Route::get('/reports', [\App\Http\Controllers\Chair\ReportController::class, 'index'])
+            ->name('index');
+        Route::get('/reports/compliance', [\App\Http\Controllers\Chair\ReportController::class, 'compliance'])
+            ->name('compliance');
+        Route::get('/reports/activity', [\App\Http\Controllers\Chair\ReportController::class, 'activity'])
+            ->name('activity');
+        Route::get('/reports/download-all', [\App\Http\Controllers\Chair\ReportController::class, 'downloadAll'])
+            ->name('download-all');
     });
 
     // Admin routes

@@ -8,7 +8,7 @@
 					{{ __('Review Portfolio') }}
 				@endif
 			</h2>
-			<a href="{{ url()->previous() == route('reviews.index') ? route('reviews.index') : route('chair.reports.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back</a>
+			<a href="{{ url()->previous() == route('reviews.index') ? route('reviews.index') : route('reports.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Back</a>
 		</div>
 	</x-slot>
 
