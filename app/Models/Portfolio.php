@@ -68,11 +68,18 @@ class Portfolio extends Model
             : $this->classOffering()->first();
 
         if ($classOffering) {
-            if (in_array('syllabus', $requiredTypes, true) && $this->isValidUrl($classOffering->syllabus)) {
+            // Check for Teaching Load (Assignment Document)
+            if (in_array('faculty_assignment', $requiredTypes, true) && !empty($classOffering->assignment_document)) {
+                $uploadedTypes[] = 'faculty_assignment';
+            }
+
+            // Check for Syllabus (can be URL or legacy file path)
+            if (in_array('syllabus', $requiredTypes, true) && !empty($classOffering->syllabus)) {
                 $uploadedTypes[] = 'syllabus';
             }
 
-            if (in_array('sample_ims', $requiredTypes, true) && $this->isValidUrl($classOffering->instructional_material)) {
+            // Check for Sample IMs (can be URL or legacy file path)
+            if (in_array('sample_ims', $requiredTypes, true) && !empty($classOffering->instructional_material)) {
                 $uploadedTypes[] = 'sample_ims';
             }
         }

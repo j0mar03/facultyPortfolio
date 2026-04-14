@@ -77,11 +77,15 @@
 							@forelse($requiredOfferings as $offering)
 								@php
 									$portfolio = $offering->portfolio;
-									$uploadedTypes = $portfolio ? $portfolio->items->pluck('type')->toArray() : [];
-									if ($offering->instructional_material) $uploadedTypes[] = 'sample_ims';
-									if ($offering->syllabus) $uploadedTypes[] = 'syllabus';
-									if ($offering->assignment_document) $uploadedTypes[] = 'faculty_assignment';
-									$stats = $portfolio ? $portfolio->completionStats() : ['completed' => 0, 'total' => count($requiredItems), 'percentage' => 0];
+									$stats = $portfolio ? $portfolio->completionStats() : ['completed' => 0, 'total' => count($requiredItems), 'percentage' => 0, 'uploaded_types' => []];
+									$uploadedTypes = $stats['uploaded_types'];
+									
+									// Backward compatibility for view icons if portfolio doesn't exist yet but offering has docs
+									if (!$portfolio) {
+										if ($offering->instructional_material) $uploadedTypes[] = 'sample_ims';
+										if ($offering->syllabus) $uploadedTypes[] = 'syllabus';
+										if ($offering->assignment_document) $uploadedTypes[] = 'faculty_assignment';
+									}
 								@endphp
 								<tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
 									<td class="px-4 py-4 whitespace-nowrap">
@@ -89,21 +93,21 @@
 										<div class="text-[10px] text-gray-500 font-bold">Section {{ $offering->section }}</div>
 									</td>
 									<td class="px-4 py-4 text-center">
-										@if($offering->instructional_material)
+										@if(in_array('sample_ims', $uploadedTypes))
 											<span class="text-green-500 text-lg">●</span>
 										@else
 											<span class="text-red-500 text-lg animate-pulse">○</span>
 										@endif
 									</td>
 									<td class="px-4 py-4 text-center">
-										@if($offering->assignment_document)
+										@if(in_array('faculty_assignment', $uploadedTypes))
 											<span class="text-green-500 text-lg">●</span>
 										@else
 											<span class="text-red-500 text-lg animate-pulse">○</span>
 										@endif
 									</td>
 									<td class="px-4 py-4 text-center">
-										@if($offering->syllabus)
+										@if(in_array('syllabus', $uploadedTypes))
 											<span class="text-green-500 text-lg">●</span>
 										@else
 											<span class="text-red-500 text-lg animate-pulse">○</span>

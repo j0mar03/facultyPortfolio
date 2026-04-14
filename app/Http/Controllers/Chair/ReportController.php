@@ -17,16 +17,18 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        // Only chairs and admins can access
-        abort_unless(in_array(Auth::user()->role, ['chair', 'admin']), 403);
+        // Only chairs, admins, and auditors can access
+        abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
 
         $user = Auth::user();
 
-        // Get all courses this chair manages
+        // Get all courses this chair manages (or all if admin/auditor)
         $managedCourses = $user->managedCourses;
 
-        // For backward compatibility
-        if ($managedCourses->isEmpty() && $user->course_id) {
+        // For backward compatibility or admin/auditor access
+        if (in_array($user->role, ['admin', 'auditor'])) {
+            $managedCourses = Course::all();
+        } elseif ($managedCourses->isEmpty() && $user->course_id) {
             $managedCourses = Course::where('id', $user->course_id)->get();
         }
 
@@ -104,9 +106,14 @@ class ReportController extends Controller
 
         $user = Auth::user();
         $managedCourses = $user->managedCourses;
-        if ($managedCourses->isEmpty() && $user->course_id) {
+
+        // For backward compatibility or admin/auditor access
+        if (in_array($user->role, ['admin', 'auditor'])) {
+            $managedCourses = Course::all();
+        } elseif ($managedCourses->isEmpty() && $user->course_id) {
             $managedCourses = Course::where('id', $user->course_id)->get();
         }
+
         abort_unless($managedCourses->isNotEmpty(), 403, 'No course assigned');
 
         $selectedCourseId = $request->get('course_id', $managedCourses->first()->id);
@@ -200,14 +207,18 @@ class ReportController extends Controller
 
     public function activity(Request $request): View
     {
-        // Only chairs and admins can access
-        abort_unless(in_array(Auth::user()->role, ['chair', 'admin']), 403);
+        // Only chairs, admins, and auditors can access
+        abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
 
         $user = Auth::user();
 
-        // Get all courses this chair manages
+        // Get all courses this chair manages (or all if admin/auditor)
         $managedCourses = $user->managedCourses;
-        if ($managedCourses->isEmpty() && $user->course_id) {
+
+        // For backward compatibility or admin/auditor access
+        if (in_array($user->role, ['admin', 'auditor'])) {
+            $managedCourses = Course::all();
+        } elseif ($managedCourses->isEmpty() && $user->course_id) {
             $managedCourses = Course::where('id', $user->course_id)->get();
         }
 
@@ -348,15 +359,18 @@ class ReportController extends Controller
 
     public function downloadAll(Request $request)
     {
-        // Only chairs and admins can download
-        abort_unless(in_array(Auth::user()->role, ['chair', 'admin']), 403);
+        // Only chairs, admins, and auditors can download
+        abort_unless(in_array(Auth::user()->role, ['chair', 'admin', 'auditor']), 403);
 
         $user = Auth::user();
 
-        // Get all courses this chair manages
+        // Get all courses this chair manages (or all if admin/auditor)
         $managedCourses = $user->managedCourses;
 
-        if ($managedCourses->isEmpty() && $user->course_id) {
+        // For backward compatibility or admin/auditor access
+        if (in_array($user->role, ['admin', 'auditor'])) {
+            $managedCourses = Course::all();
+        } elseif ($managedCourses->isEmpty() && $user->course_id) {
             $managedCourses = Course::where('id', $user->course_id)->get();
         }
 

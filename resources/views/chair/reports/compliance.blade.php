@@ -123,13 +123,17 @@
 										@foreach($offerings as $offering)
 											@php
 												$portfolio = $offering->portfolio;
-												$uploadedTypes = $portfolio ? $portfolio->items->pluck('type')->toArray() : [];
+												$stats = $portfolio ? $portfolio->completionStats() : ['completed' => 0, 'total' => count($requiredItems), 'percentage' => 0, 'uploaded_types' => []];
+												$uploadedTypes = $stats['uploaded_types'];
 												
-												if ($offering->instructional_material) $uploadedTypes[] = 'sample_ims';
-												if ($offering->syllabus) $uploadedTypes[] = 'syllabus';
-												if ($offering->assignment_document) $uploadedTypes[] = 'faculty_assignment';
-												
-												$completion = $portfolio ? $portfolio->completionStats() : ['completed' => 0, 'total' => count($requiredItems), 'percentage' => 0];
+												// Backward compatibility for view icons if portfolio doesn't exist yet but offering has docs
+												if (!$portfolio) {
+													if ($offering->instructional_material) $uploadedTypes[] = 'sample_ims';
+													if ($offering->syllabus) $uploadedTypes[] = 'syllabus';
+													if ($offering->assignment_document) $uploadedTypes[] = 'faculty_assignment';
+												}
+
+												$completion = $stats;
 											@endphp
 											<tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
 												<td class="px-4 py-4 whitespace-nowrap border-r dark:border-gray-700">
@@ -142,7 +146,7 @@
 												</td>
 												{{-- IM Column --}}
 												<td class="px-4 py-4 whitespace-nowrap text-center border-r dark:border-gray-700">
-													@if($offering->instructional_material)
+													@if(in_array('sample_ims', $uploadedTypes))
 														<span class="text-green-600 dark:text-green-400 inline-block">
 															<svg class="w-5 h-5 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
 														</span>
@@ -152,7 +156,7 @@
 												</td>
 												{{-- Teaching Load Column --}}
 												<td class="px-4 py-4 whitespace-nowrap text-center border-r dark:border-gray-700">
-													@if($offering->assignment_document)
+													@if(in_array('faculty_assignment', $uploadedTypes))
 														<span class="text-green-600 dark:text-green-400 inline-block">
 															<svg class="w-5 h-5 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
 														</span>
@@ -162,7 +166,7 @@
 												</td>
 												{{-- Syllabus Column --}}
 												<td class="px-4 py-4 whitespace-nowrap text-center border-r dark:border-gray-700">
-													@if($offering->syllabus)
+													@if(in_array('syllabus', $uploadedTypes))
 														<span class="text-green-600 dark:text-green-400 inline-block">
 															<svg class="w-5 h-5 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
 														</span>
